@@ -144,6 +144,15 @@
             {% if video.description %}
             <p class="mb-2 small">{{ video.description }}</p>
             {% endif %}
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <small class="text-muted">ID: {{ video.id[:8] }}...</small>
+                <button class="btn btn-sm btn-outline-light" 
+                        onclick="copyToClipboard('{{ video.id }}', 'Video ID')" 
+                        title="Copy full Video ID">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+            {% endif %}
             <div class="d-flex gap-3 small">
                 <span><i class="fas fa-heart"></i> {{ video.like_count }} likes</span>
                 <span><i class="fas fa-eye"></i> {{ video.views }} views</span>

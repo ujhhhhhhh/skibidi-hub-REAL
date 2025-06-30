@@ -189,6 +189,41 @@ function addBrainrotInteractions() {
         });
     });
     
+    // Copy to clipboard function
+    window.copyToClipboard = function(text, type) {
+        navigator.clipboard.writeText(text).then(function() {
+            // Show success message
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-success position-fixed';
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 200px;';
+            toast.innerHTML = `<i class="fas fa-check"></i> ${type} copied to clipboard!`;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }).catch(function(err) {
+            console.error('Failed to copy: ', err);
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-success position-fixed';
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 200px;';
+            toast.innerHTML = `<i class="fas fa-check"></i> ${type} copied!`;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        });
+    };
+
     // Add brainrot quotes rotation
     const quotes = [
         "Only in Ohio! 🚽",

@@ -270,6 +270,11 @@
                         <small class="text-muted">
                             <span class="sigma-decoration"></span>
                             Post ID: {{ post.id[:8] }}... 
+                            <button class="btn btn-sm btn-outline-secondary ms-1" 
+                                    onclick="copyToClipboard('{{ post.id }}', 'Post ID')" 
+                                    title="Copy full Post ID">
+                                <i class="fas fa-copy"></i>
+                            </button>
                             | Brainrot Level: {{ post.skibidi_level.title() }}
                         </small>
                     </div>
