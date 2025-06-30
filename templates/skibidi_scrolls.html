@@ -152,7 +152,6 @@
                     <i class="fas fa-copy"></i>
                 </button>
             </div>
-            {% endif %}
             <div class="d-flex gap-3 small">
                 <span><i class="fas fa-heart"></i> {{ video.like_count }} likes</span>
                 <span><i class="fas fa-eye"></i> {{ video.views }} views</span>
@@ -349,6 +348,21 @@ function copyVideoId(videoId) {
         document.execCommand('copy');
         document.body.removeChild(textArea);
         showToast('Video ID copied to clipboard!');
+    });
+}
+
+function copyToClipboard(text, label) {
+    navigator.clipboard.writeText(text).then(() => {
+        showToast(`${label} copied to clipboard!`);
+    }).catch(() => {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showToast(`${label} copied to clipboard!`);
     });
 }
 

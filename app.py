@@ -152,8 +152,7 @@ def create_video(username, title, description, filename):
         'description': description,
         'filename': filename,
         'timestamp': datetime.now().isoformat(),
-        'views': 0,
-        'likes': 0
+        'views': 0
     }
 
     videos = load_videos()
@@ -252,6 +251,11 @@ def toggle_like(post_id, username):
 
     save_likes(likes)
     return action, len(likes[post_id])
+
+
+def toggle_video_like(video_id, username):
+    """Toggle like for a video by username"""
+    return toggle_like(video_id, username)
 
 
 def search_posts(query):
@@ -640,7 +644,7 @@ def like_video(video_id):
     if not username:
         return jsonify({'error': 'Username required'}), 400
 
-    action, like_count = toggle_like(video_id, username)
+    action, like_count = toggle_video_like(video_id, username)
     return jsonify({'action': action, 'like_count': like_count})
 
 
