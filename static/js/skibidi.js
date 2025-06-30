@@ -147,6 +147,33 @@ function addBrainrotInteractions() {
         updateCounter(); // Initial update
     }
     
+    // Add comment character counters
+    const commentTextareas = document.querySelectorAll('textarea[name="comment"]');
+    commentTextareas.forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            const maxLength = 500;
+            const currentLength = new Blob([this.value]).size;
+            const remaining = maxLength - currentLength;
+            
+            // Create or update counter
+            let counter = this.parentNode.querySelector('.comment-counter');
+            if (!counter) {
+                counter = document.createElement('small');
+                counter.className = 'comment-counter text-muted';
+                this.parentNode.appendChild(counter);
+            }
+            
+            counter.textContent = `${currentLength}/${maxLength} bytes`;
+            counter.style.color = remaining < 50 ? '#dc2626' : '#6b7280';
+            
+            if (remaining < 0) {
+                this.style.borderColor = '#dc2626';
+            } else {
+                this.style.borderColor = '';
+            }
+        });
+    });
+    
     // Add skibidi sound effects (visual feedback)
     const buttons = document.querySelectorAll('.rizz-btn');
     buttons.forEach(button => {
@@ -215,3 +242,109 @@ function addSkibidiEasterEggs() {
 
 // Initialize easter eggs
 addSkibidiEasterEggs();
+
+// Global functions for post interactions
+function toggleLikeForm(postId) {
+    const likeForm = document.getElementById('like-form-' + postId);
+    const commentForm = document.getElementById('comment-form-' + postId);
+    
+    // Hide comment form if open
+    if (commentForm) {
+        commentForm.style.display = 'none';
+    }
+    
+    // Toggle like form
+    if (likeForm) {
+        if (likeForm.style.display === 'none' || likeForm.style.display === '') {
+            likeForm.style.display = 'block';
+            const usernameInput = likeForm.querySelector('input[name="username"]');
+            if (usernameInput) {
+                usernameInput.focus();
+            }
+        } else {
+            likeForm.style.display = 'none';
+        }
+    }
+}
+
+function toggleCommentForm(postId) {
+    const commentForm = document.getElementById('comment-form-' + postId);
+    const likeForm = document.getElementById('like-form-' + postId);
+    
+    // Hide like form if open
+    if (likeForm) {
+        likeForm.style.display = 'none';
+    }
+    
+    // Toggle comment form
+    if (commentForm) {
+        if (commentForm.style.display === 'none' || commentForm.style.display === '') {
+            commentForm.style.display = 'block';
+            const usernameInput = commentForm.querySelector('input[name="username"]');
+            if (usernameInput) {
+                usernameInput.focus();
+            }
+        } else {
+            commentForm.style.display = 'none';
+        }
+    }
+}
+
+// Enhanced form submissions with loading states
+document.addEventListener('DOMContentLoaded', function() {
+    // Add loading state to like forms
+    const likeForms = document.querySelectorAll('form[action*="/like/"]');
+    likeForms.forEach(form => {
+        form.addEventListener('submit', function() {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                const originalContent = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="loading-spinner"></span>';
+                submitBtn.disabled = true;
+                
+                // Re-enable after timeout (in case of errors)
+                setTimeout(() => {
+                    submitBtn.innerHTML = originalContent;
+                    submitBtn.disabled = false;
+                }, 5000);
+            }
+        });
+    });
+    
+    // Add loading state to comment forms
+    const commentForms = document.querySelectorAll('form[action*="/comment/"]');
+    commentForms.forEach(form => {
+        form.addEventListener('submit', function() {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                const originalContent = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="loading-spinner"></span>';
+                submitBtn.disabled = true;
+                
+                // Re-enable after timeout (in case of errors)
+                setTimeout(() => {
+                    submitBtn.innerHTML = originalContent;
+                    submitBtn.disabled = false;
+                }, 5000);
+            }
+        });
+    });
+    
+    // Add search highlighting
+    const searchQuery = new URLSearchParams(window.location.search).get('search');
+    if (searchQuery && searchQuery.trim()) {
+        highlightSearchTerms(searchQuery.trim());
+    }
+});
+
+// Search term highlighting function
+function highlightSearchTerms(query) {
+    const posts = document.querySelectorAll('.skibidi-content, .skibidi-username');
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    
+    posts.forEach(element => {
+        if (element.textContent.toLowerCase().includes(query.toLowerCase())) {
+            element.innerHTML = element.innerHTML.replace(regex, '<span class="search-highlight">$1</span>');
+        }
+    });
+}

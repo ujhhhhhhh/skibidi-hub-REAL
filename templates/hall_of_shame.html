@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Hall of Shame - Skibidi Toilet Community{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Hall of Shame Header -->
+        <div class="sigma-container">
+            <h2 class="text-center mb-3">
+                <span class="toilet-decoration"></span>
+                💀 Hall of Shame 💀
+                <span class="camera-decoration"></span>
+            </h2>
+            
+            <p class="text-center text-muted mb-4">
+                The posts that went too far into the Ohio zone...<br>
+                Learn from these anti-sigma moments! 💀
+            </p>
+            
+            <div class="text-center mb-4">
+                <a href="{{ url_for('index') }}" class="rizz-btn me-2">
+                    <i class="fas fa-home"></i> Back to Feed
+                </a>
+                <a href="{{ url_for('hall_of_fame') }}" class="btn btn-outline-warning">
+                    <i class="fas fa-trophy"></i> Hall of Fame
+                </a>
+            </div>
+        </div>
+
+        <!-- Hall of Shame Posts -->
+        {% if posts %}
+            {% for post in posts %}
+            <article class="ohio-card" style="border-left: 5px solid #dc2626; background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(255, 255, 255, 0.9));">
+                <!-- Shame Badge -->
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="shame-badge" style="background: #dc2626; color: #fff; padding: 8px 16px; border-radius: 20px; font-weight: bold;">
+                        <i class="fas fa-skull"></i> HALL OF SHAME
+                    </div>
+                    <div class="text-muted">
+                        <i class="fas fa-warning"></i>
+                        Anti-Sigma Content
+                    </div>
+                </div>
+
+                <!-- Post Header -->
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <div class="skibidi-username">
+                            <i class="fas fa-user-times"></i>
+                            {{ post.username }}
+                            <span class="brainrot-badge" style="background: #dc2626; color: #fff;">CRINGE</span>
+                        </div>
+                        <div class="skibidi-timestamp">
+                            <i class="fas fa-clock"></i>
+                            {{ post.timestamp[:19].replace('T', ' ') }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Post Content -->
+                <div class="skibidi-content">
+                    {{ post.content }}
+                </div>
+
+                <!-- File Attachment -->
+                {% if post.filename %}
+                <div class="skibidi-file">
+                    <i class="fas fa-paperclip"></i>
+                    <strong>Shameful Attachment:</strong>
+                    <br>
+                    <a href="{{ url_for('uploaded_file', filename=post.filename) }}" 
+                       target="_blank" 
+                       class="btn btn-sm btn-outline-danger mt-2">
+                        <i class="fas fa-download"></i>
+                        View/Download: {{ post.filename }}
+                    </a>
+                    
+                    <!-- Preview for images -->
+                    {% set file_ext = post.filename.split('.')[-1].lower() %}
+                    {% if file_ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                    <div class="mt-2">
+                        <img src="{{ url_for('uploaded_file', filename=post.filename) }}" 
+                             alt="Shameful content" 
+                             class="img-fluid rounded"
+                             style="max-height: 300px; cursor: pointer; border: 3px solid #dc2626; filter: grayscale(30%);"
+                             onclick="window.open(this.src, '_blank')">
+                    </div>
+                    {% elif file_ext in ['mp4', 'webm'] %}
+                    <div class="mt-2">
+                        <video controls class="img-fluid rounded" style="max-height: 300px; border: 3px solid #dc2626; filter: grayscale(30%);">
+                            <source src="{{ url_for('uploaded_file', filename=post.filename) }}" type="video/{{ file_ext }}">
+                            Your browser doesn't support video playback. Download the file instead!
+                        </video>
+                    </div>
+                    {% elif file_ext in ['mp3', 'wav'] %}
+                    <div class="mt-2">
+                        <audio controls class="w-100" style="border: 3px solid #dc2626; border-radius: 8px; filter: grayscale(30%);">
+                            <source src="{{ url_for('uploaded_file', filename=post.filename) }}" type="audio/{{ file_ext }}">
+                            Your browser doesn't support audio playback. Download the file instead!
+                        </audio>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Post Footer -->
+                <div class="mt-3 pt-2 border-top" style="border-color: #dc2626 !important;">
+                    <small class="text-muted">
+                        <span class="sigma-decoration"></span>
+                        Post ID: {{ post.id[:8] }}... 
+                        | Status: <span style="color: #dc2626; font-weight: bold;">SHAMEFUL</span>
+                        | Added to Hall of Shame
+                    </small>
+                </div>
+            </article>
+            {% endfor %}
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="skibidi-emoji">💀🚽</div>
+                <h3>No Shameful Posts Yet!</h3>
+                <p class="text-muted mb-4">
+                    The Hall of Shame is empty - everyone has been sigma so far!<br>
+                    Only the community owner can banish posts to this cringe zone!
+                </p>
+                <a href="{{ url_for('index') }}" class="rizz-btn">
+                    <i class="fas fa-home"></i>
+                    Back to Community Feed
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add shame effect to shame badges
+    const shameBadges = document.querySelectorAll('.shame-badge');
+    shameBadges.forEach(badge => {
+        setInterval(() => {
+            badge.style.boxShadow = '0 0 20px rgba(220, 38, 38, 0.8)';
+            setTimeout(() => {
+                badge.style.boxShadow = '0 0 10px rgba(220, 38, 38, 0.4)';
+            }, 500);
+        }, 3000);
+    });
+    
+    // Format timestamps
+    const timestamps = document.querySelectorAll('.skibidi-timestamp');
+    timestamps.forEach(ts => {
+        const timeText = ts.textContent.trim();
+        const isoMatch = timeText.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
+        if (isoMatch) {
+            const date = new Date(isoMatch[0]);
+            const formatted = date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long', 
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+            ts.innerHTML = '<i class="fas fa-clock"></i> ' + formatted;
+        }
+    });
+});
+</script>
+{% endblock %}

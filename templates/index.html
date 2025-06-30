@@ -15,7 +15,7 @@
             
             <div class="skibidi-stats">
                 <div class="stat-item">
-                    <div class="stat-number">{{ posts|length }}</div>
+                    <div class="stat-number">{{ pagination.total if pagination else 0 }}</div>
                     <div class="stat-label">Sigma Posts</div>
                 </div>
                 <div class="stat-item">
@@ -28,9 +28,42 @@
                 </div>
             </div>
             
+            <!-- Search Bar -->
+            <div class="row mt-4">
+                <div class="col-md-8 mx-auto">
+                    <form method="GET" class="d-flex">
+                        <input type="text" 
+                               name="search" 
+                               class="form-control sigma-input me-2" 
+                               placeholder="Search for sigma content, usernames, or Ohio vibes..."
+                               value="{{ search_query }}">
+                        <button type="submit" class="rizz-btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        {% if search_query %}
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary ms-2">
+                            <i class="fas fa-times"></i>
+                        </a>
+                        {% endif %}
+                    </form>
+                    {% if search_query %}
+                    <p class="text-center mt-2 text-muted">
+                        <i class="fas fa-search"></i>
+                        Showing results for: <strong>"{{ search_query }}"</strong>
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            
             <div class="text-center mt-3">
-                <a href="{{ url_for('create_post_route') }}" class="rizz-btn">
+                <a href="{{ url_for('create_post_route') }}" class="rizz-btn me-2">
                     <i class="fas fa-plus-circle"></i> Create Skibidi Post
+                </a>
+                <a href="{{ url_for('hall_of_fame') }}" class="rizz-btn me-2">
+                    <i class="fas fa-trophy"></i> Hall of Fame
+                </a>
+                <a href="{{ url_for('hall_of_shame') }}" class="rizz-btn">
+                    <i class="fas fa-skull"></i> Hall of Shame
                 </a>
             </div>
         </div>
@@ -103,20 +136,172 @@
                 </div>
                 {% endif %}
 
-                <!-- Post Footer -->
+                <!-- Post Interactions -->
                 <div class="mt-3 pt-2 border-top">
-                    <small class="text-muted">
-                        <span class="sigma-decoration"></span>
-                        Post ID: {{ post.id[:8] }}... 
-                        | Brainrot Level: {{ post.skibidi_level.title() }}
-                    </small>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <!-- Like and Comment Counts -->
+                        <div class="d-flex gap-3">
+                            <span class="text-muted">
+                                <i class="fas fa-heart"></i> {{ post.like_count or 0 }} likes
+                            </span>
+                            <span class="text-muted">
+                                <i class="fas fa-comment"></i> {{ post.comment_count or 0 }} comments
+                            </span>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-primary" onclick="toggleLikeForm('{{ post.id }}')">
+                                <i class="fas fa-heart"></i> Like
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="toggleCommentForm('{{ post.id }}')">
+                                <i class="fas fa-comment"></i> Comment
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Like Form (Hidden by default) -->
+                    <div id="like-form-{{ post.id }}" class="like-form mb-2" style="display: none;">
+                        <form method="POST" action="{{ url_for('like_post', post_id=post.id) }}" class="d-flex gap-2">
+                            <input type="text" name="username" class="form-control form-control-sm" 
+                                   placeholder="Your username" required>
+                            <button type="submit" class="btn btn-sm rizz-btn">
+                                <i class="fas fa-heart"></i>
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Comment Form (Hidden by default) -->
+                    <div id="comment-form-{{ post.id }}" class="comment-form mb-2" style="display: none;">
+                        <form method="POST" action="{{ url_for('add_comment_route', post_id=post.id) }}">
+                            <div class="d-flex gap-2 mb-2">
+                                <input type="text" name="username" class="form-control form-control-sm" 
+                                       placeholder="Your username" required>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <textarea name="comment" class="form-control form-control-sm" rows="2" 
+                                          placeholder="Drop your sigma comment..." required maxlength="500"></textarea>
+                                <button type="submit" class="btn btn-sm rizz-btn">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Comments Display -->
+                    {% if post.comments_data %}
+                    <div class="comments-section mt-3">
+                        <h6 class="mb-2">
+                            <i class="fas fa-comments"></i> Comments:
+                        </h6>
+                        {% for comment in post.comments_data[-3:] %}  <!-- Show last 3 comments -->
+                        <div class="comment mb-2 p-2" style="background: rgba(0,0,0,0.05); border-radius: 8px;">
+                            <div class="d-flex justify-content-between">
+                                <strong class="text-primary">{{ comment.username }}</strong>
+                                <small class="text-muted">{{ comment.timestamp[:19].replace('T', ' ') }}</small>
+                            </div>
+                            <div class="comment-content">{{ comment.content }}</div>
+                        </div>
+                        {% endfor %}
+                        {% if post.comments_data|length > 3 %}
+                        <p class="text-muted text-center">
+                            <small>... and {{ post.comments_data|length - 3 }} more comments</small>
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Post Footer -->
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <span class="sigma-decoration"></span>
+                            Post ID: {{ post.id[:8] }}... 
+                            | Brainrot Level: {{ post.skibidi_level.title() }}
+                        </small>
+                    </div>
                 </div>
             </article>
             {% endfor %}
+        
+        <!-- Pagination -->
+        {% if pagination and pagination.total_pages > 1 %}
+        <nav aria-label="Skibidi Posts Pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <!-- Previous Page -->
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('index', page=pagination.prev_num, search=search_query) }}">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </span>
+                </li>
+                {% endif %}
+                
+                <!-- Page Numbers -->
+                {% for page_num in range(1, pagination.total_pages + 1) %}
+                    {% if page_num == pagination.page %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                    </li>
+                    {% elif (page_num == 1 or page_num == pagination.total_pages or 
+                             (page_num >= pagination.page - 2 and page_num <= pagination.page + 2)) %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('index', page=page_num, search=search_query) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                    {% elif page_num == pagination.page - 3 or page_num == pagination.page + 3 %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                <!-- Next Page -->
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('index', page=pagination.next_num, search=search_query) }}">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </span>
+                </li>
+                {% endif %}
+            </ul>
+            
+            <!-- Pagination Info -->
+            <p class="text-center text-muted">
+                Showing {{ ((pagination.page - 1) * pagination.per_page + 1) }} to 
+                {{ [pagination.page * pagination.per_page, pagination.total]|min }} 
+                of {{ pagination.total }} sigma posts
+            </p>
+        </nav>
+        {% endif %}
+        
         {% else %}
             <!-- Empty State -->
             <div class="empty-state">
                 <div class="skibidi-emoji">🚽💀</div>
+                {% if search_query %}
+                <h3>No Skibidi posts found!</h3>
+                <p class="text-muted mb-4">
+                    Your search for "{{ search_query }}" didn't find any sigma content.<br>
+                    Try different Ohio-level keywords or check out all posts!
+                </p>
+                <a href="{{ url_for('index') }}" class="rizz-btn">
+                    <i class="fas fa-list"></i>
+                    View All Posts
+                </a>
+                {% else %}
                 <h3>No Skibidi posts yet!</h3>
                 <p class="text-muted mb-4">
                     The community is waiting for your sigma energy!<br>
@@ -126,6 +311,7 @@
                     <i class="fas fa-plus-circle"></i>
                     Create First Post
                 </a>
+                {% endif %}
             </div>
         {% endif %}
     </div>
@@ -153,6 +339,69 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             ts.innerHTML = '<i class="fas fa-clock"></i> ' + formatted;
         }
+    });
+});
+
+// Toggle like form visibility
+function toggleLikeForm(postId) {
+    const likeForm = document.getElementById('like-form-' + postId);
+    const commentForm = document.getElementById('comment-form-' + postId);
+    
+    // Hide comment form if open
+    commentForm.style.display = 'none';
+    
+    // Toggle like form
+    if (likeForm.style.display === 'none') {
+        likeForm.style.display = 'block';
+        likeForm.querySelector('input[name="username"]').focus();
+    } else {
+        likeForm.style.display = 'none';
+    }
+}
+
+// Toggle comment form visibility
+function toggleCommentForm(postId) {
+    const commentForm = document.getElementById('comment-form-' + postId);
+    const likeForm = document.getElementById('like-form-' + postId);
+    
+    // Hide like form if open
+    likeForm.style.display = 'none';
+    
+    // Toggle comment form
+    if (commentForm.style.display === 'none') {
+        commentForm.style.display = 'block';
+        commentForm.querySelector('input[name="username"]').focus();
+    } else {
+        commentForm.style.display = 'none';
+    }
+}
+
+// Add character counter for comment textarea
+document.addEventListener('DOMContentLoaded', function() {
+    const commentTextareas = document.querySelectorAll('textarea[name="comment"]');
+    commentTextareas.forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            const maxLength = 500;
+            const currentLength = new Blob([this.value]).size;
+            const remaining = maxLength - currentLength;
+            
+            // Create or update counter
+            let counter = this.parentNode.querySelector('.comment-counter');
+            if (!counter) {
+                counter = document.createElement('small');
+                counter.className = 'comment-counter text-muted';
+                this.parentNode.appendChild(counter);
+            }
+            
+            counter.textContent = `${currentLength}/${maxLength} bytes`;
+            counter.style.color = remaining < 50 ? '#dc2626' : '#6b7280';
+            
+            if (remaining < 0) {
+                this.style.borderColor = '#dc2626';
+            } else {
+                this.style.borderColor = '';
+            }
+        });
     });
 });
 </script>

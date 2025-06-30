@@ -2,6 +2,7 @@ import os
 import json
 import uuid
 import logging
+import math
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
@@ -19,6 +20,7 @@ DATA_FOLDER = 'data'
 MAX_CONTENT_LENGTH = 25 * 1024 * 1024  # 25MB
 TEXT_MAX_LENGTH = 2048  # 2KB
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'mp4', 'webm', 'mp3', 'wav', 'doc', 'docx', 'zip'}
+POSTS_PER_PAGE = 10  # Pagination
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
@@ -36,6 +38,22 @@ def get_posts_file():
     """Get path to posts JSON file"""
     return os.path.join(DATA_FOLDER, 'posts.json')
 
+def get_comments_file():
+    """Get path to comments JSON file"""
+    return os.path.join(DATA_FOLDER, 'comments.json')
+
+def get_likes_file():
+    """Get path to likes JSON file"""
+    return os.path.join(DATA_FOLDER, 'likes.json')
+
+def get_hall_of_fame_file():
+    """Get path to hall of fame JSON file"""
+    return os.path.join(DATA_FOLDER, 'hall_of_fame.json')
+
+def get_hall_of_shame_file():
+    """Get path to hall of shame JSON file"""
+    return os.path.join(DATA_FOLDER, 'hall_of_shame.json')
+
 def load_posts():
     """Load all posts from JSON file"""
     posts_file = get_posts_file()
@@ -50,6 +68,54 @@ def load_posts():
             return []
     return []
 
+def load_comments():
+    """Load all comments from JSON file"""
+    comments_file = get_comments_file()
+    if os.path.exists(comments_file):
+        try:
+            with open(comments_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            logging.error(f"Error loading comments: {e}")
+            return {}
+    return {}
+
+def load_likes():
+    """Load all likes from JSON file"""
+    likes_file = get_likes_file()
+    if os.path.exists(likes_file):
+        try:
+            with open(likes_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            logging.error(f"Error loading likes: {e}")
+            return {}
+    return {}
+
+def load_hall_of_fame():
+    """Load hall of fame posts"""
+    hall_file = get_hall_of_fame_file()
+    if os.path.exists(hall_file):
+        try:
+            with open(hall_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            logging.error(f"Error loading hall of fame: {e}")
+            return []
+    return []
+
+def load_hall_of_shame():
+    """Load hall of shame posts"""
+    hall_file = get_hall_of_shame_file()
+    if os.path.exists(hall_file):
+        try:
+            with open(hall_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            logging.error(f"Error loading hall of shame: {e}")
+            return []
+    return []
+
 def save_posts(posts):
     """Save posts to JSON file"""
     posts_file = get_posts_file()
@@ -61,6 +127,28 @@ def save_posts(posts):
         logging.error(f"Error saving posts: {e}")
         return False
 
+def save_comments(comments):
+    """Save comments to JSON file"""
+    comments_file = get_comments_file()
+    try:
+        with open(comments_file, 'w', encoding='utf-8') as f:
+            json.dump(comments, f, ensure_ascii=False, indent=2)
+        return True
+    except IOError as e:
+        logging.error(f"Error saving comments: {e}")
+        return False
+
+def save_likes(likes):
+    """Save likes to JSON file"""
+    likes_file = get_likes_file()
+    try:
+        with open(likes_file, 'w', encoding='utf-8') as f:
+            json.dump(likes, f, ensure_ascii=False, indent=2)
+        return True
+    except IOError as e:
+        logging.error(f"Error saving likes: {e}")
+        return False
+
 def create_post(username, content, filename=None):
     """Create a new post"""
     post = {
@@ -69,7 +157,9 @@ def create_post(username, content, filename=None):
         'content': content,
         'filename': filename,
         'timestamp': datetime.now().isoformat(),
-        'skibidi_level': 'sigma'  # Default brainrot level
+        'skibidi_level': 'sigma',  # Default brainrot level
+        'likes': 0,
+        'comments': []
     }
     
     posts = load_posts()
@@ -79,6 +169,77 @@ def create_post(username, content, filename=None):
         return post
     return None
 
+def add_comment(post_id, username, comment_content):
+    """Add a comment to a post"""
+    comment = {
+        'id': str(uuid.uuid4()),
+        'username': username,
+        'content': comment_content,
+        'timestamp': datetime.now().isoformat()
+    }
+    
+    comments = load_comments()
+    if post_id not in comments:
+        comments[post_id] = []
+    comments[post_id].append(comment)
+    
+    if save_comments(comments):
+        return comment
+    return None
+
+def toggle_like(post_id, username):
+    """Toggle like for a post by username"""
+    likes = load_likes()
+    if post_id not in likes:
+        likes[post_id] = []
+    
+    if username in likes[post_id]:
+        likes[post_id].remove(username)
+        action = 'unliked'
+    else:
+        likes[post_id].append(username)
+        action = 'liked'
+    
+    save_likes(likes)
+    return action, len(likes[post_id])
+
+def search_posts(query):
+    """Search posts by content and username"""
+    posts = load_posts()
+    if not query:
+        return posts
+    
+    query_lower = query.lower()
+    filtered_posts = []
+    
+    for post in posts:
+        if (query_lower in post.get('content', '').lower() or 
+            query_lower in post.get('username', '').lower()):
+            filtered_posts.append(post)
+    
+    return filtered_posts
+
+def paginate_posts(posts, page, per_page):
+    """Paginate posts"""
+    total = len(posts)
+    start = (page - 1) * per_page
+    end = start + per_page
+    
+    paginated_posts = posts[start:end]
+    total_pages = math.ceil(total / per_page) if total > 0 else 1
+    
+    return {
+        'posts': paginated_posts,
+        'total': total,
+        'page': page,
+        'per_page': per_page,
+        'total_pages': total_pages,
+        'has_prev': page > 1,
+        'has_next': page < total_pages,
+        'prev_num': page - 1 if page > 1 else None,
+        'next_num': page + 1 if page < total_pages else None
+    }
+
 @app.errorhandler(RequestEntityTooLarge)
 def handle_file_too_large(e):
     """Handle file too large error"""
@@ -87,9 +248,33 @@ def handle_file_too_large(e):
 
 @app.route('/')
 def index():
-    """Main community feed"""
-    posts = load_posts()
-    return render_template('index.html', posts=posts)
+    """Main community feed with pagination and search"""
+    page = request.args.get('page', 1, type=int)
+    search_query = request.args.get('search', '', type=str)
+    
+    # Get posts (filtered by search if query provided)
+    if search_query:
+        posts = search_posts(search_query)
+    else:
+        posts = load_posts()
+    
+    # Add likes and comments data to posts
+    likes = load_likes()
+    comments = load_comments()
+    
+    for post in posts:
+        post_id = post['id']
+        post['like_count'] = len(likes.get(post_id, []))
+        post['comment_count'] = len(comments.get(post_id, []))
+        post['comments_data'] = comments.get(post_id, [])
+    
+    # Paginate posts
+    pagination = paginate_posts(posts, page, POSTS_PER_PAGE)
+    
+    return render_template('index.html', 
+                         posts=pagination['posts'],
+                         pagination=pagination,
+                         search_query=search_query)
 
 @app.route('/create', methods=['GET', 'POST'])
 def create_post_route():
@@ -115,10 +300,11 @@ def create_post_route():
         uploaded_filename = None
         if 'file' in request.files:
             file = request.files['file']
-            if file.filename != '':
-                if file and allowed_file(file.filename):
+            if file.filename and file.filename != '':
+                if file and file.filename and allowed_file(file.filename):
                     # Generate unique filename
-                    file_extension = secure_filename(file.filename).rsplit('.', 1)[1].lower()
+                    secure_name = secure_filename(file.filename)
+                    file_extension = secure_name.rsplit('.', 1)[1].lower()
                     unique_filename = f"{uuid.uuid4()}.{file_extension}"
                     file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
                     
@@ -143,6 +329,61 @@ def create_post_route():
             flash('Failed to create your Skibidi post! The toilet gods are angry! 😱', 'error')
     
     return render_template('create_post.html')
+
+@app.route('/like/<post_id>', methods=['POST'])
+def like_post(post_id):
+    """Toggle like for a post"""
+    username = request.form.get('username', '').strip()
+    if not username:
+        flash('You need to provide a username to like posts! Drop your Skibidi name! 🚽', 'error')
+        return redirect(url_for('index'))
+    
+    action, like_count = toggle_like(post_id, username)
+    
+    if action == 'liked':
+        flash(f'Sigma energy added! That post is now more rizz! ⚡', 'success')
+    else:
+        flash(f'Like removed! Still sigma though! 💀', 'success')
+    
+    return redirect(url_for('index'))
+
+@app.route('/comment/<post_id>', methods=['POST'])
+def add_comment_route(post_id):
+    """Add comment to a post"""
+    username = request.form.get('username', '').strip()
+    comment_content = request.form.get('comment', '').strip()
+    
+    if not username:
+        flash('Bruh, drop your username to comment! No anonymous Ohio energy! 🚽', 'error')
+        return redirect(url_for('index'))
+    
+    if not comment_content:
+        flash('You gotta write something sigma for your comment! 📸', 'error')
+        return redirect(url_for('index'))
+    
+    if len(comment_content.encode('utf-8')) > 500:  # 500 bytes for comments
+        flash('That comment is too long! Keep it under 500 bytes for maximum brainrot! 💀', 'error')
+        return redirect(url_for('index'))
+    
+    comment = add_comment(post_id, username, comment_content)
+    if comment:
+        flash('Comment added! Your brainrot wisdom has been shared! ⚡', 'success')
+    else:
+        flash('Failed to add comment! The Skibidi gods are upset! 😱', 'error')
+    
+    return redirect(url_for('index'))
+
+@app.route('/hall-of-fame')
+def hall_of_fame():
+    """Hall of Fame page"""
+    fame_posts = load_hall_of_fame()
+    return render_template('hall_of_fame.html', posts=fame_posts, hall_type='fame')
+
+@app.route('/hall-of-shame')
+def hall_of_shame():
+    """Hall of Shame page"""
+    shame_posts = load_hall_of_shame()
+    return render_template('hall_of_shame.html', posts=shame_posts, hall_type='shame')
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):

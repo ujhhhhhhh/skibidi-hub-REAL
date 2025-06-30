@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Hall of Fame - Skibidi Toilet Community{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Hall of Fame Header -->
+        <div class="sigma-container">
+            <h2 class="text-center mb-3">
+                <span class="toilet-decoration"></span>
+                🏆 Hall of Fame 🏆
+                <span class="camera-decoration"></span>
+            </h2>
+            
+            <p class="text-center text-muted mb-4">
+                The most legendary Skibidi posts that achieved ultimate sigma status!<br>
+                Only the most Ohio-level content makes it here! ⚡
+            </p>
+            
+            <div class="text-center mb-4">
+                <a href="{{ url_for('index') }}" class="rizz-btn me-2">
+                    <i class="fas fa-home"></i> Back to Feed
+                </a>
+                <a href="{{ url_for('hall_of_shame') }}" class="btn btn-outline-danger">
+                    <i class="fas fa-skull"></i> Hall of Shame
+                </a>
+            </div>
+        </div>
+
+        <!-- Hall of Fame Posts -->
+        {% if posts %}
+            {% for post in posts %}
+            <article class="ohio-card" style="border-left: 5px solid #ffd700; background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 255, 255, 0.9));">
+                <!-- Fame Badge -->
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="fame-badge" style="background: #ffd700; color: #000; padding: 8px 16px; border-radius: 20px; font-weight: bold;">
+                        <i class="fas fa-trophy"></i> HALL OF FAME
+                    </div>
+                    <div class="text-muted">
+                        <i class="fas fa-crown"></i>
+                        Legendary Post
+                    </div>
+                </div>
+
+                <!-- Post Header -->
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <div class="skibidi-username">
+                            <i class="fas fa-user-crown"></i>
+                            {{ post.username }}
+                            <span class="brainrot-badge" style="background: #ffd700; color: #000;">LEGEND</span>
+                        </div>
+                        <div class="skibidi-timestamp">
+                            <i class="fas fa-clock"></i>
+                            {{ post.timestamp[:19].replace('T', ' ') }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Post Content -->
+                <div class="skibidi-content">
+                    {{ post.content }}
+                </div>
+
+                <!-- File Attachment -->
+                {% if post.filename %}
+                <div class="skibidi-file">
+                    <i class="fas fa-paperclip"></i>
+                    <strong>Legendary Attachment:</strong>
+                    <br>
+                    <a href="{{ url_for('uploaded_file', filename=post.filename) }}" 
+                       target="_blank" 
+                       class="btn btn-sm btn-outline-warning mt-2">
+                        <i class="fas fa-download"></i>
+                        View/Download: {{ post.filename }}
+                    </a>
+                    
+                    <!-- Preview for images -->
+                    {% set file_ext = post.filename.split('.')[-1].lower() %}
+                    {% if file_ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                    <div class="mt-2">
+                        <img src="{{ url_for('uploaded_file', filename=post.filename) }}" 
+                             alt="Legendary content" 
+                             class="img-fluid rounded"
+                             style="max-height: 300px; cursor: pointer; border: 3px solid #ffd700;"
+                             onclick="window.open(this.src, '_blank')">
+                    </div>
+                    {% elif file_ext in ['mp4', 'webm'] %}
+                    <div class="mt-2">
+                        <video controls class="img-fluid rounded" style="max-height: 300px; border: 3px solid #ffd700;">
+                            <source src="{{ url_for('uploaded_file', filename=post.filename) }}" type="video/{{ file_ext }}">
+                            Your browser doesn't support video playback. Download the file instead!
+                        </video>
+                    </div>
+                    {% elif file_ext in ['mp3', 'wav'] %}
+                    <div class="mt-2">
+                        <audio controls class="w-100" style="border: 3px solid #ffd700; border-radius: 8px;">
+                            <source src="{{ url_for('uploaded_file', filename=post.filename) }}" type="audio/{{ file_ext }}">
+                            Your browser doesn't support audio playback. Download the file instead!
+                        </audio>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Post Footer -->
+                <div class="mt-3 pt-2 border-top" style="border-color: #ffd700 !important;">
+                    <small class="text-muted">
+                        <span class="sigma-decoration"></span>
+                        Post ID: {{ post.id[:8] }}... 
+                        | Status: <span style="color: #ffd700; font-weight: bold;">LEGENDARY</span>
+                        | Inducted into Hall of Fame
+                    </small>
+                </div>
+            </article>
+            {% endfor %}
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="skibidi-emoji">🏆💀</div>
+                <h3>No Legendary Posts Yet!</h3>
+                <p class="text-muted mb-4">
+                    The Hall of Fame is waiting for the most sigma content!<br>
+                    Only the community owner can induct posts into legendary status!
+                </p>
+                <a href="{{ url_for('index') }}" class="rizz-btn">
+                    <i class="fas fa-home"></i>
+                    Back to Community Feed
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add sparkle animation to fame badges
+    const fameBadges = document.querySelectorAll('.fame-badge');
+    fameBadges.forEach(badge => {
+        setInterval(() => {
+            badge.style.boxShadow = '0 0 20px rgba(255, 215, 0, 0.8)';
+            setTimeout(() => {
+                badge.style.boxShadow = '0 0 10px rgba(255, 215, 0, 0.4)';
+            }, 500);
+        }, 2000);
+    });
+    
+    // Format timestamps
+    const timestamps = document.querySelectorAll('.skibidi-timestamp');
+    timestamps.forEach(ts => {
+        const timeText = ts.textContent.trim();
+        const isoMatch = timeText.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
+        if (isoMatch) {
+            const date = new Date(isoMatch[0]);
+            const formatted = date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long', 
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+            ts.innerHTML = '<i class="fas fa-clock"></i> ' + formatted;
+        }
+    });
+});
+</script>
+{% endblock %}

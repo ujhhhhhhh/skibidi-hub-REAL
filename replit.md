@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a Flask-based community hub application themed around internet memes and "brainrot" culture. It's a social media-style platform where users can create posts with text content and file uploads, displaying them in a chronological feed. The application uses a simple JSON file-based storage system for posts and includes a file upload system for media attachments.
+This is a Flask-based community hub application themed around internet memes and "brainrot" culture. It's a social media-style platform where users can create posts with text content and file uploads, displaying them in a chronological feed with full social interaction features. The application uses a simple JSON file-based storage system for posts, comments, likes, and special halls of fame/shame content. Features include pagination, search functionality, like/comment systems, and owner-curated hall of fame/shame sections.
 
 ## System Architecture
 
@@ -20,16 +20,26 @@ This is a Flask-based community hub application themed around internet memes and
 - **Error Handling**: Basic exception handling with user-friendly flash messages
 
 ### Data Storage
-- **Primary Storage**: JSON file-based system (`data/posts.json`)
+- **Primary Storage**: JSON file-based system with multiple data files:
+  - `data/posts.json` - Main posts content and metadata
+  - `data/comments.json` - User comments organized by post ID
+  - `data/likes.json` - Like counts and user tracking by post ID
+  - `data/hall_of_fame.json` - Owner-curated legendary posts
+  - `data/hall_of_shame.json` - Owner-curated shameful posts
 - **File Storage**: Local filesystem storage in `uploads/` directory
-- **No Database**: Currently uses file-based storage without traditional database
+- **No Database**: Uses file-based storage for simplicity and direct control
 
 ## Key Components
 
 ### Core Application (`app.py`)
 - Flask application setup with configuration
 - File upload handling with size and type restrictions
-- JSON-based post management system
+- JSON-based post management system with comments and likes
+- Search functionality across posts and usernames
+- Pagination system for efficient content browsing
+- Like/unlike toggle system with user tracking
+- Comment system with character limits
+- Hall of Fame/Shame owner-only curation system
 - Security features including filename sanitization
 
 ### Entry Point (`main.py`)
@@ -37,13 +47,15 @@ This is a Flask-based community hub application themed around internet memes and
 - Configured for development with host binding to 0.0.0.0
 
 ### Frontend Templates
-- **Base Template**: Common layout with header, navigation, and styling
-- **Index Template**: Main feed displaying posts chronologically
+- **Base Template**: Common layout with header, navigation, and hall links
+- **Index Template**: Main feed with pagination, search, comments, and likes
 - **Create Post Template**: Form for creating new posts with file uploads
+- **Hall of Fame Template**: Showcase for legendary community posts
+- **Hall of Shame Template**: Display for posts deemed inappropriate
 
 ### Static Assets
-- **CSS**: Custom theming with CSS variables and responsive design
-- **JavaScript**: Interactive features for file uploads and UI enhancements
+- **CSS**: Enhanced theming with interactive elements, pagination, and hall styling
+- **JavaScript**: Advanced interactions for comments, likes, search highlighting, and form management
 
 ## Data Flow
 
@@ -87,7 +99,17 @@ This is a Flask-based community hub application themed around internet memes and
 
 ## Changelog
 
-- June 30, 2025. Initial setup
+- June 30, 2025. Initial setup with basic post creation and feed display
+- June 30, 2025. Added comprehensive social features:
+  - Comments system with 500-byte limit per comment
+  - Like/unlike system with user tracking
+  - Search functionality across post content and usernames
+  - Pagination system (10 posts per page)
+  - Hall of Fame for legendary posts (owner-curated)
+  - Hall of Shame for inappropriate posts (owner-curated)
+  - Enhanced UI with interactive buttons and forms
+  - Search result highlighting
+  - Mobile-responsive design improvements
 
 ## User Preferences
 
