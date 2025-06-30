@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, jsonify
 
-# Configure logging
+# Configure logging.
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
