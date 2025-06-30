@@ -1,3 +1,22 @@
+import subprocess
+import sys
+import importlib.util
+
+import os
+import stat
+
+
+def ensure_flask_installed():
+    if importlib.util.find_spec("flask") is None:
+        print("Flask not found. Installing...")
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", "flask"])
+        print("Flask installed.")
+    else:
+        print("Flask is already installed.")
+
+
+# Ensure Flask is ready before proceeding
 from app import app
 
 if __name__ == "__main__":
