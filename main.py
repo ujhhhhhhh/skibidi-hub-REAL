@@ -6,6 +6,7 @@ import os
 import stat
 
 
+# Ensure Flask is installed
 def ensure_flask_installed():
     if importlib.util.find_spec("flask") is None:
         print("Flask not found. Installing...")
@@ -17,6 +18,7 @@ def ensure_flask_installed():
 
 
 # Ensure Flask is ready before proceeding
+ensure_flask_installed()
 from app import app
 
 if __name__ == "__main__":
