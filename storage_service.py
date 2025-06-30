@@ -110,7 +110,9 @@ class VercelBlobStorage:
             str: Blob URL if successful, None otherwise
         """
         try:
-            blob_name = f"uploads/{filename}"
+            # Remove uploads/ prefix if already present to avoid double prefix
+            clean_filename = filename.replace('uploads/', '') if filename.startswith('uploads/') else filename
+            blob_name = f"uploads/{clean_filename}"
             
             # Use multipart upload for larger files
             use_multipart = len(file_content) > 10 * 1024 * 1024  # 10MB threshold
@@ -147,7 +149,9 @@ class VercelBlobStorage:
             str: Public URL if file exists, None otherwise
         """
         try:
-            blob_name = f"uploads/{filename}"
+            # Handle both direct filename and uploads/ prefixed filename
+            clean_filename = filename.replace('uploads/', '') if filename.startswith('uploads/') else filename
+            blob_name = f"uploads/{clean_filename}"
             
             # List blobs to check if file exists
             blobs_response = vercel_blob.list({'prefix': blob_name, 'limit': '1'})

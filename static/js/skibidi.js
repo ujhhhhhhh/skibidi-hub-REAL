@@ -290,6 +290,161 @@ function toggleCommentForm(postId) {
     }
 }
 
+function toggleComments(postId) {
+    const commentsSection = document.getElementById('comments-section-' + postId);
+    const toggleIcon = document.getElementById('toggle-icon-' + postId);
+    const toggleText = document.getElementById('toggle-text-' + postId);
+    
+    if (commentsSection) {
+        if (commentsSection.style.display === 'none' || commentsSection.style.display === '') {
+            commentsSection.style.display = 'block';
+            if (toggleIcon) toggleIcon.className = 'fas fa-eye-slash';
+            if (toggleText) toggleText.textContent = 'Hide Comments';
+            
+            // Load comments if not already loaded
+            loadComments(postId);
+        } else {
+            commentsSection.style.display = 'none';
+            if (toggleIcon) toggleIcon.className = 'fas fa-eye';
+            if (toggleText) toggleText.textContent = 'Show Comments';
+        }
+    }
+}
+
+function loadComments(postId) {
+    const commentsContainer = document.getElementById('comments-container-' + postId);
+    const loadingSpinner = document.getElementById('comments-loading-' + postId);
+    
+    if (!commentsContainer || commentsContainer.hasAttribute('data-loaded')) {
+        return; // Already loaded
+    }
+    
+    if (loadingSpinner) {
+        loadingSpinner.style.display = 'block';
+    }
+    
+    // Fetch comments via AJAX
+    fetch(`/comments/${postId}?page=1`)
+        .then(response => response.json())
+        .then(data => {
+            if (loadingSpinner) {
+                loadingSpinner.style.display = 'none';
+            }
+            
+            if (data.comments && data.comments.length > 0) {
+                renderComments(postId, data.comments, data.pagination);
+                commentsContainer.setAttribute('data-loaded', 'true');
+            } else {
+                commentsContainer.innerHTML = '<p class="text-muted text-center">No comments yet. Be the first to drop some sigma wisdom!</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading comments:', error);
+            if (loadingSpinner) {
+                loadingSpinner.style.display = 'none';
+            }
+            commentsContainer.innerHTML = '<p class="text-danger text-center">Failed to load comments. Try again later!</p>';
+        });
+}
+
+function renderComments(postId, comments, pagination) {
+    const commentsContainer = document.getElementById('comments-container-' + postId);
+    const paginationContainer = document.getElementById('comment-pagination-' + postId);
+    
+    if (!commentsContainer) return;
+    
+    // Render comments
+    let commentsHTML = '';
+    comments.forEach(comment => {
+        commentsHTML += `
+            <div class="comment-item border-start border-primary ps-3 mb-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong class="skibidi-username">${escapeHtml(comment.username)}</strong>
+                        <small class="text-muted ms-2">${formatTimeAgo(comment.timestamp)}</small>
+                    </div>
+                </div>
+                <div class="skibidi-content mt-1">${escapeHtml(comment.content)}</div>
+            </div>
+        `;
+    });
+    
+    commentsContainer.innerHTML = commentsHTML;
+    
+    // Render pagination if needed
+    if (paginationContainer && pagination && pagination.total_pages > 1) {
+        renderCommentPagination(postId, pagination);
+    }
+}
+
+function renderCommentPagination(postId, pagination) {
+    const paginationContainer = document.getElementById('comment-pagination-' + postId);
+    if (!paginationContainer) return;
+    
+    let paginationHTML = '<div class="btn-group btn-group-sm" role="group">';
+    
+    // Previous button
+    if (pagination.has_prev) {
+        paginationHTML += `<button type="button" class="btn btn-outline-secondary" onclick="loadCommentsPage('${postId}', ${pagination.prev_num})">‹</button>`;
+    }
+    
+    // Page info
+    paginationHTML += `<button type="button" class="btn btn-outline-primary" disabled>${pagination.page}/${pagination.total_pages}</button>`;
+    
+    // Next button
+    if (pagination.has_next) {
+        paginationHTML += `<button type="button" class="btn btn-outline-secondary" onclick="loadCommentsPage('${postId}', ${pagination.next_num})">›</button>`;
+    }
+    
+    paginationHTML += '</div>';
+    paginationContainer.innerHTML = paginationHTML;
+}
+
+function loadCommentsPage(postId, page) {
+    const commentsContainer = document.getElementById('comments-container-' + postId);
+    const loadingSpinner = document.getElementById('comments-loading-' + postId);
+    
+    if (loadingSpinner) {
+        loadingSpinner.style.display = 'block';
+    }
+    
+    fetch(`/comments/${postId}?page=${page}`)
+        .then(response => response.json())
+        .then(data => {
+            if (loadingSpinner) {
+                loadingSpinner.style.display = 'none';
+            }
+            renderComments(postId, data.comments, data.pagination);
+        })
+        .catch(error => {
+            console.error('Error loading comments page:', error);
+            if (loadingSpinner) {
+                loadingSpinner.style.display = 'none';
+            }
+        });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatTimeAgo(timestamp) {
+    const now = new Date();
+    const commentTime = new Date(timestamp);
+    const diffMs = now - commentTime;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return commentTime.toLocaleDateString();
+}
+
 // Enhanced form submissions with loading states
 document.addEventListener('DOMContentLoaded', function() {
     // Add loading state to like forms
