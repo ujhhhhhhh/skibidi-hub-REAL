@@ -25,6 +25,7 @@ ALLOWED_EXTENSIONS = {
     'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'mp4', 'webm', 'mp3', 'wav',
     'doc', 'docx', 'zip'
 }
+VIDEO_EXTENSIONS = {'mp4', 'webm', 'mov', 'avi'}
 POSTS_PER_PAGE = 10  # Pagination
 COMMENTS_PER_PAGE = 5  # Comments pagination
 
@@ -118,6 +119,55 @@ def load_hall_of_shame():
     except Exception as e:
         logging.error(f"Error loading hall of shame: {e}")
         return []
+
+
+def load_videos():
+    """Load all videos from Vercel blob storage"""
+    try:
+        videos = storage_service.get_json_data('videos', [])
+        # Sort by timestamp descending (newest first)
+        return sorted(videos,
+                      key=lambda x: x.get('timestamp', ''),
+                      reverse=True)
+    except Exception as e:
+        logging.error(f"Error loading videos: {e}")
+        return []
+
+
+def save_videos(videos):
+    """Save videos to Vercel blob storage"""
+    try:
+        return storage_service.put_json_data('videos', videos)
+    except Exception as e:
+        logging.error(f"Error saving videos: {e}")
+        return False
+
+
+def create_video(username, title, description, filename):
+    """Create a new video"""
+    video = {
+        'id': str(uuid.uuid4()),
+        'username': username,
+        'title': title,
+        'description': description,
+        'filename': filename,
+        'timestamp': datetime.now().isoformat(),
+        'views': 0,
+        'likes': 0
+    }
+
+    videos = load_videos()
+    videos.append(video)
+
+    if save_videos(videos):
+        return video
+    return None
+
+
+def allowed_video_file(filename):
+    """Check if file extension is allowed for videos"""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in VIDEO_EXTENSIONS
 
 
 def save_posts(posts):
@@ -507,6 +557,91 @@ def uploaded_file(filename):
     except Exception as e:
         logging.error(f"Error serving file {filename}: {e}")
         return "Error serving file", 500
+
+
+@app.route('/skibidi-scrolls')
+def skibidi_scrolls():
+    """Skibidi Scrolls video feed"""
+    videos = load_videos()
+    
+    # Add likes data to videos
+    likes = load_likes()
+    for video in videos:
+        video_id = video['id']
+        video['like_count'] = len(likes.get(video_id, []))
+    
+    return render_template('skibidi_scrolls.html', videos=videos)
+
+
+@app.route('/upload-scroll', methods=['GET', 'POST'])
+def upload_scroll():
+    """Upload new Skibidi Scroll video"""
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+
+        # Validate inputs
+        if not username:
+            flash('Bruh, you gotta drop your Skibidi username! No cap! 🚽', 'error')
+            return render_template('upload_scroll.html')
+
+        if not title:
+            flash('Your Skibidi Scroll needs a sigma title! 📸', 'error')
+            return render_template('upload_scroll.html')
+
+        # Handle video upload
+        if 'video' not in request.files:
+            flash('You need to upload a video for Skibidi Scrolls! 🎬', 'error')
+            return render_template('upload_scroll.html')
+
+        video_file = request.files['video']
+        if not video_file.filename:
+            flash('You need to upload a video for Skibidi Scrolls! 🎬', 'error')
+            return render_template('upload_scroll.html')
+
+        if video_file and video_file.filename and allowed_video_file(video_file.filename):
+            # Generate unique filename
+            secure_name = secure_filename(video_file.filename)
+            file_extension = secure_name.rsplit('.', 1)[1].lower()
+            unique_filename = f"scroll_{uuid.uuid4()}.{file_extension}"
+
+            try:
+                # Read file content
+                file_content = video_file.read()
+                # Get content type
+                content_type = video_file.content_type or f'video/{file_extension}'
+                
+                # Upload to Vercel blob storage
+                blob_url = storage_service.put_file(file_content, unique_filename, content_type)
+                if blob_url:
+                    # Create the video
+                    video = create_video(username, title, description, unique_filename)
+                    if video:
+                        flash('Skibidi Scroll uploaded successfully! Absolute sigma energy! 🚽✨', 'success')
+                        return redirect(url_for('skibidi_scrolls'))
+                    else:
+                        flash('Failed to create your Skibidi Scroll! The toilet gods are angry! 😱', 'error')
+                else:
+                    flash('Failed to upload your Skibidi Scroll! Try again, sigma! 💀', 'error')
+            except Exception as e:
+                logging.error(f"Error uploading video: {e}")
+                flash('Failed to upload your Skibidi Scroll! Try again, sigma! 💀', 'error')
+        else:
+            flash('That file type is sus! Only upload video formats for Skibidi Scrolls! 🎬', 'error')
+
+    return render_template('upload_scroll.html')
+
+
+@app.route('/like-video/<video_id>', methods=['POST'])
+def like_video(video_id):
+    """Toggle like for a video"""
+    username = request.form.get('username', '').strip()
+    if not username:
+        return jsonify({'error': 'Username required'}), 400
+
+    action, like_count = toggle_like(video_id, username)
+    return jsonify({'action': action, 'like_count': like_count})
 
 
 @app.route('/api/posts')

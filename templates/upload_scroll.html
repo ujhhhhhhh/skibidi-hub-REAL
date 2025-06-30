@@ -1,0 +1,241 @@
+
+{% extends "base.html" %}
+
+{% block title %}Upload Skibidi Scroll - Skibidi Hub{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-6 mx-auto">
+        <div class="sigma-container">
+            <h2 class="text-center mb-4">
+                <span class="toilet-decoration"></span>
+                Upload Skibidi Scroll
+                <span class="camera-decoration"></span>
+            </h2>
+            
+            <p class="text-center text-muted mb-4">
+                Drop your most sigma video content for infinite scrolling! 🚽📱⚡
+            </p>
+
+            <!-- Upload Form -->
+            <form method="POST" enctype="multipart/form-data" class="sigma-form">
+                <!-- Username Field -->
+                <div class="mb-4">
+                    <label for="username" class="form-label">
+                        <i class="fas fa-user"></i>
+                        <strong>Your Skibidi Username</strong>
+                    </label>
+                    <input type="text" 
+                           class="form-control sigma-input" 
+                           id="username" 
+                           name="username" 
+                           placeholder="Enter your sigma username"
+                           required
+                           maxlength="50">
+                </div>
+
+                <!-- Title Field -->
+                <div class="mb-4">
+                    <label for="title" class="form-label">
+                        <i class="fas fa-heading"></i>
+                        <strong>Video Title</strong>
+                    </label>
+                    <input type="text" 
+                           class="form-control sigma-input" 
+                           id="title" 
+                           name="title" 
+                           placeholder="Give your Skibidi Scroll an epic title"
+                           required
+                           maxlength="100">
+                </div>
+
+                <!-- Description Field -->
+                <div class="mb-4">
+                    <label for="description" class="form-label">
+                        <i class="fas fa-align-left"></i>
+                        <strong>Description (Optional)</strong>
+                    </label>
+                    <textarea class="form-control sigma-textarea" 
+                              id="description" 
+                              name="description" 
+                              rows="3"
+                              placeholder="Describe your sigma content..."
+                              maxlength="200"></textarea>
+                    <div class="description-counter text-end mt-1">
+                        <small class="text-muted">0/200 characters</small>
+                    </div>
+                </div>
+
+                <!-- Video Upload Field -->
+                <div class="mb-4">
+                    <label for="video" class="form-label">
+                        <i class="fas fa-video"></i>
+                        <strong>Upload Your Skibidi Video</strong>
+                    </label>
+                    
+                    <div class="video-upload-area">
+                        <div class="skibidi-emoji">🎬</div>
+                        <p><strong>Drag & drop your Skibidi video here</strong></p>
+                        <p class="text-muted">Or click to select video</p>
+                        <p class="text-muted small">
+                            <i class="fas fa-info-circle"></i>
+                            Max file size: 25MB | Supported: MP4, WebM, MOV, AVI
+                        </p>
+                    </div>
+                    
+                    <input type="file" 
+                           class="form-control" 
+                           id="video" 
+                           name="video" 
+                           accept=".mp4,.webm,.mov,.avi"
+                           required
+                           style="display: none;">
+                    
+                    <div id="video-preview" class="mt-3" style="display: none;">
+                        <video id="preview-video" controls style="max-width: 100%; max-height: 300px;" class="rounded">
+                        </video>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center">
+                    <button type="submit" class="rizz-btn btn-lg">
+                        <i class="fas fa-upload"></i>
+                        Upload Skibidi Scroll
+                    </button>
+                    <div class="mt-3">
+                        <a href="{{ url_for('skibidi_scrolls') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Scrolls
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const videoInput = document.getElementById('video');
+    const videoUploadArea = document.querySelector('.video-upload-area');
+    const videoPreview = document.getElementById('video-preview');
+    const previewVideo = document.getElementById('preview-video');
+    const descriptionTextarea = document.getElementById('description');
+    const descriptionCounter = document.querySelector('.description-counter small');
+    
+    // Description character counter
+    descriptionTextarea.addEventListener('input', function() {
+        const length = this.value.length;
+        descriptionCounter.textContent = `${length}/200 characters`;
+        descriptionCounter.style.color = length > 180 ? '#dc2626' : '#6b7280';
+    });
+    
+    // Video upload area styling
+    videoUploadArea.style.cssText = `
+        border: 3px dashed var(--skibidi-blue);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        background: var(--skibidi-light-grey);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    `;
+    
+    // Drag and drop functionality
+    videoUploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#7c3aed';
+        this.style.background = 'rgba(124, 58, 237, 0.1)';
+    });
+    
+    videoUploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#2563eb';
+        this.style.background = '#f3f4f6';
+    });
+    
+    videoUploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#2563eb';
+        this.style.background = '#f3f4f6';
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            if (isValidVideoFile(file)) {
+                videoInput.files = files;
+                updateVideoDisplay(file);
+            } else {
+                alert('Please upload a valid video file (MP4, WebM, MOV, AVI)');
+            }
+        }
+    });
+    
+    // Click to select video
+    videoUploadArea.addEventListener('click', function() {
+        videoInput.click();
+    });
+    
+    // Video input change handler
+    videoInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            const file = e.target.files[0];
+            if (isValidVideoFile(file)) {
+                updateVideoDisplay(file);
+            } else {
+                alert('Please upload a valid video file (MP4, WebM, MOV, AVI)');
+                this.value = '';
+            }
+        }
+    });
+    
+    function isValidVideoFile(file) {
+        const validTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
+        const validExtensions = ['mp4', 'webm', 'mov', 'avi'];
+        const extension = file.name.split('.').pop().toLowerCase();
+        return validTypes.includes(file.type) || validExtensions.includes(extension);
+    }
+    
+    function updateVideoDisplay(file) {
+        const maxSize = 25 * 1024 * 1024; // 25MB
+        
+        if (file.size > maxSize) {
+            videoUploadArea.innerHTML = `
+                <div class="skibidi-emoji">💀</div>
+                <p style="color: #dc2626; font-weight: bold;">Video too chonky! Keep it under 25MB!</p>
+                <p style="color: #6b7280;">Selected: ${file.name} (${formatFileSize(file.size)})</p>
+            `;
+            videoPreview.style.display = 'none';
+            return;
+        }
+        
+        videoUploadArea.innerHTML = `
+            <div class="skibidi-emoji">✅</div>
+            <p style="color: #16a34a; font-weight: bold;">Skibidi video ready to upload!</p>
+            <p style="color: #6b7280;">${file.name} (${formatFileSize(file.size)})</p>
+        `;
+        
+        // Show video preview
+        const url = URL.createObjectURL(file);
+        previewVideo.src = url;
+        videoPreview.style.display = 'block';
+        
+        // Clean up URL when done
+        previewVideo.addEventListener('loadeddata', function() {
+            URL.revokeObjectURL(url);
+        });
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+});
+</script>
+{% endblock %}

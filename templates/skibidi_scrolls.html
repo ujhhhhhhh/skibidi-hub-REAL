@@ -1,0 +1,398 @@
+
+{% extends "base.html" %}
+
+{% block title %}Skibidi Scrolls - Skibidi Hub{% endblock %}
+
+{% block content %}
+<style>
+.scrolls-container {
+    height: 100vh;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    position: relative;
+}
+
+.scroll-item {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    scroll-snap-align: start;
+    position: relative;
+    background: #000;
+}
+
+.scroll-video {
+    max-height: 100vh;
+    max-width: 100vw;
+    object-fit: contain;
+}
+
+.scroll-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    color: white;
+    padding: 2rem 1rem 1rem;
+    z-index: 10;
+}
+
+.scroll-actions {
+    position: absolute;
+    right: 1rem;
+    bottom: 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    z-index: 10;
+}
+
+.scroll-btn {
+    background: rgba(255,255,255,0.2);
+    border: 2px solid white;
+    color: white;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.scroll-btn:hover {
+    background: rgba(255,255,255,0.4);
+    transform: scale(1.1);
+}
+
+.nav-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+    padding: 1rem;
+}
+
+.scroll-counter {
+    position: fixed;
+    top: 50%;
+    right: 1rem;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    z-index: 50;
+}
+
+@media (max-width: 768px) {
+    .scroll-overlay {
+        padding: 1rem 0.5rem 0.5rem;
+    }
+    
+    .scroll-actions {
+        right: 0.5rem;
+        bottom: 4rem;
+    }
+}
+</style>
+
+<div class="nav-overlay">
+    <div class="d-flex justify-content-between align-items-center">
+        <h4 class="text-white mb-0">
+            🚽 Skibidi Scrolls 📱
+        </h4>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('upload_scroll') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Upload
+            </a>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">
+                <i class="fas fa-home"></i> Feed
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="scroll-counter">
+    <span id="current-scroll">1</span> / {{ videos|length }}
+</div>
+
+{% if videos %}
+<div class="scrolls-container" id="scrollsContainer">
+    {% for video in videos %}
+    <div class="scroll-item" data-video-id="{{ video.id }}" data-index="{{ loop.index }}">
+        <video class="scroll-video" 
+               id="video-{{ loop.index }}"
+               muted 
+               loop 
+               controls>
+            <source src="{{ url_for('uploaded_file', filename=video.filename) }}" type="video/mp4">
+            Your browser doesn't support video playback!
+        </video>
+        
+        <div class="scroll-overlay">
+            <h5 class="fw-bold">{{ video.title }}</h5>
+            <p class="mb-1">@{{ video.username }}</p>
+            {% if video.description %}
+            <p class="mb-2 small">{{ video.description }}</p>
+            {% endif %}
+            <div class="d-flex gap-3 small">
+                <span><i class="fas fa-heart"></i> {{ video.like_count }} likes</span>
+                <span><i class="fas fa-eye"></i> {{ video.views }} views</span>
+                <span><i class="fas fa-clock"></i> {{ moment(video.timestamp).fromNow() if moment else video.timestamp[:19].replace('T', ' ') }}</span>
+            </div>
+        </div>
+        
+        <div class="scroll-actions">
+            <button class="scroll-btn" onclick="toggleVideoLike('{{ video.id }}', this)">
+                <i class="fas fa-heart"></i>
+            </button>
+            <button class="scroll-btn" onclick="copyVideoId('{{ video.id }}')">
+                <i class="fas fa-copy"></i>
+            </button>
+            <button class="scroll-btn" onclick="shareVideo('{{ video.id }}')">
+                <i class="fas fa-share"></i>
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="d-flex align-items-center justify-content-center" style="height: 100vh; background: #000; color: white;">
+    <div class="text-center">
+        <div style="font-size: 4rem;">🚽💀</div>
+        <h3>No Skibidi Scrolls yet!</h3>
+        <p class="text-muted mb-4">Be the first to drop some sigma video content!</p>
+        <a href="{{ url_for('upload_scroll') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus-circle"></i> Upload First Scroll
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Like Modal -->
+<div class="modal fade" id="likeModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Like this Skibidi Scroll</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="likeUsername" class="form-control" placeholder="Your username">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitVideoLike()">
+                    <i class="fas fa-heart"></i> Like
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentVideoIndex = 0;
+let currentLikeVideoId = null;
+const totalVideos = {{ videos|length }};
+
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('scrollsContainer');
+    if (!container || totalVideos === 0) return;
+    
+    // Set up scroll behavior
+    container.addEventListener('scroll', handleScroll);
+    
+    // Play first video
+    playCurrentVideo();
+    
+    // Handle keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowDown' || e.key === ' ') {
+            e.preventDefault();
+            scrollToNext();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            scrollToPrev();
+        }
+    });
+});
+
+function handleScroll() {
+    const container = document.getElementById('scrollsContainer');
+    const scrollTop = container.scrollTop;
+    const itemHeight = window.innerHeight;
+    const newIndex = Math.round(scrollTop / itemHeight);
+    
+    if (newIndex !== currentVideoIndex && newIndex >= 0 && newIndex < totalVideos) {
+        pauseCurrentVideo();
+        currentVideoIndex = newIndex;
+        playCurrentVideo();
+        updateScrollCounter();
+    }
+}
+
+function playCurrentVideo() {
+    const video = document.getElementById(`video-${currentVideoIndex + 1}`);
+    if (video) {
+        video.currentTime = 0;
+        video.play().catch(e => console.log('Autoplay prevented:', e));
+    }
+}
+
+function pauseCurrentVideo() {
+    const video = document.getElementById(`video-${currentVideoIndex + 1}`);
+    if (video) {
+        video.pause();
+    }
+}
+
+function updateScrollCounter() {
+    document.getElementById('current-scroll').textContent = currentVideoIndex + 1;
+}
+
+function scrollToNext() {
+    if (currentVideoIndex < totalVideos - 1) {
+        const container = document.getElementById('scrollsContainer');
+        const nextPosition = (currentVideoIndex + 1) * window.innerHeight;
+        container.scrollTo({ top: nextPosition, behavior: 'smooth' });
+    }
+}
+
+function scrollToPrev() {
+    if (currentVideoIndex > 0) {
+        const container = document.getElementById('scrollsContainer');
+        const prevPosition = (currentVideoIndex - 1) * window.innerHeight;
+        container.scrollTo({ top: prevPosition, behavior: 'smooth' });
+    }
+}
+
+function toggleVideoLike(videoId, button) {
+    currentLikeVideoId = videoId;
+    const likeModal = new bootstrap.Modal(document.getElementById('likeModal'));
+    likeModal.show();
+    
+    // Focus username input
+    setTimeout(() => {
+        document.getElementById('likeUsername').focus();
+    }, 500);
+}
+
+function submitVideoLike() {
+    const username = document.getElementById('likeUsername').value.trim();
+    if (!username) {
+        alert('Please enter your username!');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('username', username);
+    
+    fetch(`/like-video/${currentLikeVideoId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+        } else {
+            // Update like count in UI
+            const scrollItem = document.querySelector(`[data-video-id="${currentLikeVideoId}"]`);
+            const likeCountSpan = scrollItem.querySelector('.fa-heart').parentNode;
+            likeCountSpan.innerHTML = `<i class="fas fa-heart"></i> ${data.like_count} likes`;
+            
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('likeModal')).hide();
+            
+            // Clear username
+            document.getElementById('likeUsername').value = '';
+            
+            // Show feedback
+            showToast(data.action === 'liked' ? 'Sigma energy added!' : 'Like removed!');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to like video. Try again!');
+    });
+}
+
+function copyVideoId(videoId) {
+    navigator.clipboard.writeText(videoId).then(() => {
+        showToast('Video ID copied to clipboard!');
+    }).catch(() => {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = videoId;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showToast('Video ID copied to clipboard!');
+    });
+}
+
+function shareVideo(videoId) {
+    const url = `${window.location.origin}/skibidi-scrolls#${videoId}`;
+    if (navigator.share) {
+        navigator.share({
+            title: 'Check out this Skibidi Scroll!',
+            url: url
+        });
+    } else {
+        copyVideoId(url);
+        showToast('Video link copied to clipboard!');
+    }
+}
+
+function showToast(message) {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        z-index: 1000;
+        font-weight: bold;
+        backdrop-filter: blur(10px);
+    `;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    // Remove after 2 seconds
+    setTimeout(() => {
+        document.body.removeChild(toast);
+    }, 2000);
+}
+
+// Handle direct video links
+if (window.location.hash) {
+    const videoId = window.location.hash.substring(1);
+    const targetVideo = document.querySelector(`[data-video-id="${videoId}"]`);
+    if (targetVideo) {
+        const index = parseInt(targetVideo.dataset.index) - 1;
+        setTimeout(() => {
+            const container = document.getElementById('scrollsContainer');
+            container.scrollTo({ top: index * window.innerHeight, behavior: 'smooth' });
+        }, 100);
+    }
+}
+</script>
+{% endblock %}
