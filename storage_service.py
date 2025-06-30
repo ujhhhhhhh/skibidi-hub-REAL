@@ -210,6 +210,7 @@ class VercelBlobStorage:
             return []
     
     def migrate_local_data(self, local_data_folder: str = "data", local_upload_folder: str = "uploads") -> bool:
+        return True # comment that line to enable migration
         """
         Migrate existing local data to blob storage
         
