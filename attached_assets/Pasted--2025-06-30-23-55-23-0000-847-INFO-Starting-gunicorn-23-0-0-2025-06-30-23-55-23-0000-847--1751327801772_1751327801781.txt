@@ -1,0 +1,96 @@
+[2025-06-30 23:55:23 +0000] [847] [INFO] Starting gunicorn 23.0.0
+[2025-06-30 23:55:23 +0000] [847] [INFO] Listening at: http://0.0.0.0:5000 (847)
+[2025-06-30 23:55:23 +0000] [847] [INFO] Using worker: sync
+[2025-06-30 23:55:23 +0000] [859] [INFO] Booting worker with pid: 859
+Flask is already installed.
+INFO:root:Found local data folders, attempting migration to Vercel blob storage...
+[2025-06-30 23:55:27 +0000] [847] [INFO] Handling signal: winchge
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Fposts.json HTTP/1.1" 200 282
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/posts.json HTTP/1.1" 200 391
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+[2025-06-30 23:55:29 +0000] [847] [INFO] Handling signal: winch
+[2025-06-30 23:55:29 +0000] [847] [INFO] Handling signal: winch
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/posts.json?download=1 HTTP/1.1" 200 None
+INFO:root:Successfully retrieved JSON data: data/posts.json
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+[2025-06-30 23:55:29 +0000] [847] [INFO] Handling signal: winch
+[2025-06-30 23:55:29 +0000] [847] [INFO] Handling signal: winch
+[2025-06-30 23:55:29 +0000] [847] [INFO] Handling signal: winch
+[2025-06-30 23:55:29 +0000] [847] [INFO] Handling signal: winch
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Flikes.json HTTP/1.1" 200 280
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+[2025-06-30 23:55:29 +0000] [847] [INFO] Handling signal: winch
+[2025-06-30 23:55:29 +0000] [847] [INFO] Handling signal: winch
+[2025-06-30 23:55:29 +0000] [847] [INFO] Handling signal: winch
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/likes.json HTTP/1.1" 200 389
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+[2025-06-30 23:55:29 +0000] [847] [INFO] Handling signal: winch
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/likes.json?download=1 HTTP/1.1" 200 76
+INFO:root:Successfully retrieved JSON data: data/likes.json
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Fcomments.json HTTP/1.1" 200 290
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/comments.json HTTP/1.1" 200 402
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/comments.json?download=1 HTTP/1.1" 200 641
+INFO:root:Successfully retrieved JSON data: data/comments.json
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=uploads%2Ff0048d75-e949-4b40-8a85-15c874478c7a.gif HTTP/1.1" 200 372
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=uploads%2F45f28a13-fe72-4af6-bfde-8ea0994bbf28.png HTTP/1.1" 200 373
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=uploads%2F770e7205-be58-4f59-a435-7c9a4c5f448d.mp4 HTTP/1.1" 200 373
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=uploads%2Fe09a5c0a-4e1a-4aa9-8411-aaf18fdd63ea.mp4 HTTP/1.1" 200 374
+[2025-06-30 23:56:09 +0000] [847] [INFO] Handling signal: winch
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Fvideos.json HTTP/1.1" 200 28
+INFO:root:JSON data file not found: data/videos.json, returning default
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Flikes.json HTTP/1.1" 200 280
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/likes.json HTTP/1.1" 200 389
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/likes.json?download=1 HTTP/1.1" 200 76
+INFO:root:Successfully retrieved JSON data: data/likes.json
+ERROR:app:Exception on /skibidi-scrolls [GET]
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/app.py", line 573, in skibidi_scrolls
+    return render_template('skibidi_scrolls.html', videos=videos)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py", line 771, in compile
+    self.handle_exception(source=source_hint)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/runner/workspace/templates/skibidi_scrolls.html", line 155, in template
+    {% endif %}
+jinja2.exceptions.TemplateSyntaxError: Encountered unknown tag 'endif'. You probably made a nesting mistake. Jinja is expecting this tag, but currently looking for 'endfor' or 'else'. The innermost block that needs to be closed is 'for'.
