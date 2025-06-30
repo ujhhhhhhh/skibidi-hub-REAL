@@ -87,6 +87,14 @@ This is a Flask-based community hub application themed around internet memes and
 - **Host Binding**: 0.0.0.0 for container compatibility
 - **Environment Variables**: Session secret configurable via SESSION_SECRET
 
+### Vercel Deployment
+- **vercel.json**: Configured for Python runtime with @vercel/python
+- **wsgi.py**: WSGI entry point for production deployment
+- **install.sh**: Dependency installation script for manual deployments
+- **build.sh**: Application startup script with Gunicorn configuration
+- **dependencies.txt**: Python package requirements list
+- **README.md**: Complete deployment guide for Vercel and manual installation
+
 ### File System Requirements
 - Write permissions for `uploads/` and `data/` directories
 - Sufficient storage for user-uploaded files
@@ -96,6 +104,7 @@ This is a Flask-based community hub application themed around internet memes and
 - Current architecture suitable for small to medium communities
 - File-based storage may need migration to database for larger scale
 - Static file serving may need CDN or dedicated file server for production
+- Vercel deployment provides automatic scaling and CDN distribution
 
 ## Changelog
 
@@ -122,6 +131,13 @@ This is a Flask-based community hub application themed around internet memes and
   - Smart popup system with 15-minute cooldown using localStorage
   - Discord popup only appears on home page with animated design
   - Direct link to Discord server: https://discord.gg/9TN4VvEhH9
+- June 30, 2025. Vercel deployment preparation:
+  - Created install.sh script for dependency installation
+  - Created build.sh script for starting Flask app with Gunicorn
+  - Added vercel.json configuration for Vercel Python runtime
+  - Created wsgi.py entry point for production deployment
+  - Added dependencies.txt with exact package versions
+  - Created comprehensive README.md with deployment instructions
 
 ## User Preferences
 
