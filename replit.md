@@ -20,14 +20,14 @@ This is a Flask-based community hub application themed around internet memes and
 - **Error Handling**: Basic exception handling with user-friendly flash messages
 
 ### Data Storage
-- **Primary Storage**: JSON file-based system with multiple data files:
-  - `data/posts.json` - Main posts content and metadata
-  - `data/comments.json` - User comments organized by post ID
-  - `data/likes.json` - Like counts and user tracking by post ID
-  - `data/hall_of_fame.json` - Owner-curated legendary posts
-  - `data/hall_of_shame.json` - Owner-curated shameful posts
-- **File Storage**: Local filesystem storage in `uploads/` directory
-- **No Database**: Uses file-based storage for simplicity and direct control
+- **Primary Storage**: Vercel Blob Storage for cloud-based data persistence:
+  - JSON data files: posts, comments, likes, hall_of_fame, hall_of_shame
+  - Automatic migration from local data files to cloud storage
+  - Secure API-based access with environment token authentication
+- **File Storage**: Vercel Blob Storage for uploaded media files
+  - Direct cloud upload and serving via blob URLs
+  - Fallback to local storage for development compatibility
+- **No Database**: Uses cloud blob storage for simplicity and scalability
 
 ## Key Components
 
@@ -138,6 +138,13 @@ This is a Flask-based community hub application themed around internet memes and
   - Created wsgi.py entry point for production deployment
   - Added dependencies.txt with exact package versions
   - Created comprehensive README.md with deployment instructions
+- June 30, 2025. Vercel Blob Storage integration and Replit migration:
+  - Fully integrated Vercel Blob Storage for all data persistence
+  - Migrated from local JSON files to cloud-based blob storage
+  - Updated file upload system to use blob storage with direct URLs
+  - Automatic data migration from local files to cloud storage
+  - Enhanced file serving with blob URL redirects and local fallback
+  - Completed migration from Replit Agent to standard Replit environment
 
 ## User Preferences
 

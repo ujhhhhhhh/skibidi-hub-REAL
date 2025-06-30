@@ -58,132 +58,81 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def get_posts_file():
-    """Get path to posts JSON file"""
-    return os.path.join(DATA_FOLDER, 'posts.json')
-
-
-def get_comments_file():
-    """Get path to comments JSON file"""
-    return os.path.join(DATA_FOLDER, 'comments.json')
-
-
-def get_likes_file():
-    """Get path to likes JSON file"""
-    return os.path.join(DATA_FOLDER, 'likes.json')
-
-
-def get_hall_of_fame_file():
-    """Get path to hall of fame JSON file"""
-    return os.path.join(DATA_FOLDER, 'hall_of_fame.json')
-
-
-def get_hall_of_shame_file():
-    """Get path to hall of shame JSON file"""
-    return os.path.join(DATA_FOLDER, 'hall_of_shame.json')
+# Note: File path functions removed - now using Vercel blob storage directly
 
 
 def load_posts():
-    """Load all posts from JSON file"""
-    posts_file = get_posts_file()
-    if os.path.exists(posts_file):
-        try:
-            with open(posts_file, 'r', encoding='utf-8') as f:
-                posts = json.load(f)
-                # Sort by timestamp descending (newest first)
-                return sorted(posts,
-                              key=lambda x: x.get('timestamp', ''),
-                              reverse=True)
-        except (json.JSONDecodeError, IOError) as e:
-            logging.error(f"Error loading posts: {e}")
-            return []
-    return []
+    """Load all posts from Vercel blob storage"""
+    try:
+        posts = storage_service.get_json_data('posts', [])
+        # Sort by timestamp descending (newest first)
+        return sorted(posts,
+                      key=lambda x: x.get('timestamp', ''),
+                      reverse=True)
+    except Exception as e:
+        logging.error(f"Error loading posts: {e}")
+        return []
 
 
 def load_comments():
-    """Load all comments from JSON file"""
-    comments_file = get_comments_file()
-    if os.path.exists(comments_file):
-        try:
-            with open(comments_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError) as e:
-            logging.error(f"Error loading comments: {e}")
-            return {}
-    return {}
+    """Load all comments from Vercel blob storage"""
+    try:
+        return storage_service.get_json_data('comments', {})
+    except Exception as e:
+        logging.error(f"Error loading comments: {e}")
+        return {}
 
 
 def load_likes():
-    """Load all likes from JSON file"""
-    likes_file = get_likes_file()
-    if os.path.exists(likes_file):
-        try:
-            with open(likes_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError) as e:
-            logging.error(f"Error loading likes: {e}")
-            return {}
-    return {}
+    """Load all likes from Vercel blob storage"""
+    try:
+        return storage_service.get_json_data('likes', {})
+    except Exception as e:
+        logging.error(f"Error loading likes: {e}")
+        return {}
 
 
 def load_hall_of_fame():
-    """Load hall of fame posts"""
-    hall_file = get_hall_of_fame_file()
-    if os.path.exists(hall_file):
-        try:
-            with open(hall_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError) as e:
-            logging.error(f"Error loading hall of fame: {e}")
-            return []
-    return []
+    """Load hall of fame posts from Vercel blob storage"""
+    try:
+        return storage_service.get_json_data('hall_of_fame', [])
+    except Exception as e:
+        logging.error(f"Error loading hall of fame: {e}")
+        return []
 
 
 def load_hall_of_shame():
-    """Load hall of shame posts"""
-    hall_file = get_hall_of_shame_file()
-    if os.path.exists(hall_file):
-        try:
-            with open(hall_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError) as e:
-            logging.error(f"Error loading hall of shame: {e}")
-            return []
-    return []
+    """Load hall of shame posts from Vercel blob storage"""
+    try:
+        return storage_service.get_json_data('hall_of_shame', [])
+    except Exception as e:
+        logging.error(f"Error loading hall of shame: {e}")
+        return []
 
 
 def save_posts(posts):
-    """Save posts to JSON file"""
-    posts_file = get_posts_file()
+    """Save posts to Vercel blob storage"""
     try:
-        with open(posts_file, 'w', encoding='utf-8') as f:
-            json.dump(posts, f, ensure_ascii=False, indent=2)
-        return True
-    except IOError as e:
+        return storage_service.put_json_data('posts', posts)
+    except Exception as e:
         logging.error(f"Error saving posts: {e}")
         return False
 
 
 def save_comments(comments):
-    """Save comments to JSON file"""
-    comments_file = get_comments_file()
+    """Save comments to Vercel blob storage"""
     try:
-        with open(comments_file, 'w', encoding='utf-8') as f:
-            json.dump(comments, f, ensure_ascii=False, indent=2)
-        return True
-    except IOError as e:
+        return storage_service.put_json_data('comments', comments)
+    except Exception as e:
         logging.error(f"Error saving comments: {e}")
         return False
 
 
 def save_likes(likes):
-    """Save likes to JSON file"""
-    likes_file = get_likes_file()
+    """Save likes to Vercel blob storage"""
     try:
-        with open(likes_file, 'w', encoding='utf-8') as f:
-            json.dump(likes, f, ensure_ascii=False, indent=2)
-        return True
-    except IOError as e:
+        return storage_service.put_json_data('likes', likes)
+    except Exception as e:
         logging.error(f"Error saving likes: {e}")
         return False
 
@@ -379,7 +328,7 @@ def create_post_route():
                 'error')
             return render_template('create_post.html')
 
-        # Handle file upload
+        # Handle file upload to Vercel blob storage
         uploaded_filename = None
         if 'file' in request.files:
             file = request.files['file']
@@ -388,16 +337,26 @@ def create_post_route():
                     # Generate unique filename
                     secure_name = secure_filename(file.filename)
                     file_extension = secure_name.rsplit('.', 1)[1].lower()
-                    unique_filename = f"{uuid.uuid4()}.{file_extension}"
-                    file_path = os.path.join(app.config['UPLOAD_FOLDER'],
-                                             unique_filename)
+                    unique_filename = f"uploads/{uuid.uuid4()}.{file_extension}"
 
                     try:
-                        file.save(file_path)
-                        uploaded_filename = unique_filename
-                        logging.info(f"File saved: {file_path}")
+                        # Read file content
+                        file_content = file.read()
+                        # Get content type
+                        content_type = file.content_type or 'application/octet-stream'
+                        
+                        # Upload to Vercel blob storage
+                        blob_url = storage_service.put_file(file_content, unique_filename, content_type)
+                        if blob_url:
+                            uploaded_filename = unique_filename
+                            logging.info(f"File uploaded to blob storage: {blob_url}")
+                        else:
+                            flash(
+                                'Failed to upload your Skibidi content! Try again, sigma! 💀',
+                                'error')
+                            return render_template('create_post.html')
                     except Exception as e:
-                        logging.error(f"Error saving file: {e}")
+                        logging.error(f"Error uploading file: {e}")
                         flash(
                             'Failed to upload your Skibidi content! Try again, sigma! 💀',
                             'error')
@@ -523,10 +482,21 @@ def get_comments(post_id):
     })
 
 
-@app.route('/uploads/<filename>')
+@app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
-    """Serve uploaded files"""
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    """Serve uploaded files from Vercel blob storage"""
+    try:
+        # Get the blob URL for the file
+        blob_url = storage_service.get_file_url(filename)
+        if blob_url:
+            return redirect(blob_url)
+        else:
+            # Fallback to local file if blob storage fails
+            return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    except Exception as e:
+        logging.error(f"Error serving file {filename}: {e}")
+        # Fallback to local file if blob storage fails
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
 @app.route('/api/posts')
