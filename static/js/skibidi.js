@@ -245,12 +245,8 @@ addSkibidiEasterEggs();
 
 // Expose functions to global window object for onclick handlers
 window.toggleLikeForm = function toggleLikeForm(postId) {
-    console.log('toggleLikeForm called for postId:', postId);
     const likeForm = document.getElementById('like-form-' + postId);
     const commentForm = document.getElementById('comment-form-' + postId);
-    
-    console.log('Like form found:', !!likeForm);
-    console.log('Comment form found:', !!commentForm);
     
     // Hide comment form if open
     if (commentForm) {
@@ -268,18 +264,12 @@ window.toggleLikeForm = function toggleLikeForm(postId) {
         } else {
             likeForm.style.display = 'none';
         }
-    } else {
-        console.error('Like form not found for postId:', postId);
     }
 }
 
 window.toggleCommentForm = function toggleCommentForm(postId) {
-    console.log('toggleCommentForm called for postId:', postId);
     const commentForm = document.getElementById('comment-form-' + postId);
     const likeForm = document.getElementById('like-form-' + postId);
-    
-    console.log('Comment form found:', !!commentForm);
-    console.log('Like form found:', !!likeForm);
     
     // Hide like form if open
     if (likeForm) {
@@ -297,8 +287,6 @@ window.toggleCommentForm = function toggleCommentForm(postId) {
         } else {
             commentForm.style.display = 'none';
         }
-    } else {
-        console.error('Comment form not found for postId:', postId);
     }
 }
 
