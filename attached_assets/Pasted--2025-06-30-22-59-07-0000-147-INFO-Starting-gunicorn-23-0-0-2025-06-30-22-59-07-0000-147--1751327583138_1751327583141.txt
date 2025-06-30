@@ -1,0 +1,125 @@
+[2025-06-30 22:59:07 +0000] [147] [INFO] Starting gunicorn 23.0.0
+[2025-06-30 22:59:07 +0000] [147] [INFO] Listening at: http://0.0.0.0:5000 (147)
+[2025-06-30 22:59:07 +0000] [147] [INFO] Using worker: sync
+[2025-06-30 22:59:07 +0000] [158] [INFO] Booting worker with pid: 158
+Flask is already installed.
+INFO:root:Found local data folders, attempting migration to Vercel blob storage...
+INFO:root:Successfully migrated local data to Vercel blob storage
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Fposts.json HTTP/1.1" 200 282
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/posts.json HTTP/1.1" 200 391
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/posts.json?download=1 HTTP/1.1" 200 None
+INFO:root:Successfully retrieved JSON data: data/posts.json
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Flikes.json HTTP/1.1" 200 280
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/likes.json HTTP/1.1" 200 389
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/likes.json?download=1 HTTP/1.1" 200 76
+INFO:root:Successfully retrieved JSON data: data/likes.json
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Fcomments.json HTTP/1.1" 200 290
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/comments.json HTTP/1.1" 200 402
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/comments.json?download=1 HTTP/1.1" 200 641
+INFO:root:Successfully retrieved JSON data: data/comments.json
+ERROR:app:Exception on / [GET]
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/app.py", line 360, in index
+    return render_template('index.html',
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/templating.py", line 150, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/templating.py", line 131, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/runner/workspace/templates/index.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/runner/workspace/templates/base.html", line 128, in template
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.TemplateAssertionError: block 'content' defined twice
+[2025-06-30 22:59:12 +0000] [147] [INFO] Handling signal: winch
+[2025-06-30 22:59:12 +0000] [147] [INFO] Handling signal: winch
+[2025-06-30 23:30:10 +0000] [147] [INFO] Handling signal: winch
+[2025-06-30 23:52:23 +0000] [147] [INFO] Handling signal: winch
+[2025-06-30 23:52:28 +0000] [147] [INFO] Handling signal: winch
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Fposts.json HTTP/1.1" 200 282
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/posts.json HTTP/1.1" 200 391
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/posts.json?download=1 HTTP/1.1" 200 None
+INFO:root:Successfully retrieved JSON data: data/posts.json
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+[2025-06-30 23:52:30 +0000] [147] [INFO] Handling signal: winch
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Flikes.json HTTP/1.1" 200 280
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/likes.json HTTP/1.1" 200 389
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/likes.json?download=1 HTTP/1.1" 200 76
+INFO:root:Successfully retrieved JSON data: data/likes.json
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Fcomments.json HTTP/1.1" 200 290
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/comments.json HTTP/1.1" 200 402
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/comments.json?download=1 HTTP/1.1" 200 641
+INFO:root:Successfully retrieved JSON data: data/comments.json
+ERROR:app:Exception on / [GET]
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/app.py", line 360, in index
+    return render_template('index.html',
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/templating.py", line 150, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/templating.py", line 131, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/runner/workspace/templates/index.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/runner/workspace/templates/base.html", line 128, in template
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.TemplateAssertionError: block 'content' defined twice
