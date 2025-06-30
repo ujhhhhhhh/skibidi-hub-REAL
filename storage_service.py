@@ -39,7 +39,9 @@ class VercelBlobStorage:
             json_bytes = json_content.encode('utf-8')
             
             blob_name = f"data/{file_key}.json"
-            response = vercel_blob.put(blob_name, json_bytes, verbose=True)
+            response = vercel_blob.put(blob_name, json_bytes, {
+                'allowOverwrite': True
+            }, verbose=True)
             
             if response and 'url' in response:
                 logging.info(f"Successfully stored JSON data: {blob_name}")
@@ -116,7 +118,10 @@ class VercelBlobStorage:
             response = vercel_blob.put(
                 blob_name, 
                 file_content, 
-                multipart=use_multipart,
+                {
+                    'allowOverwrite': True,
+                    'multipart': use_multipart
+                },
                 verbose=True
             )
             
