@@ -6,7 +6,8 @@ import math
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
-from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from storage_service import storage_service
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -15,20 +16,28 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "skibidi_sigma_ohio_rizz_2024")
 
 # Configuration
-UPLOAD_FOLDER = 'uploads'
-DATA_FOLDER = 'data'
 MAX_CONTENT_LENGTH = 25 * 1024 * 1024  # 25MB
 TEXT_MAX_LENGTH = 2048  # 2KB
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'mp4', 'webm', 'mp3', 'wav', 'doc', 'docx', 'zip'}
 POSTS_PER_PAGE = 10  # Pagination
 COMMENTS_PER_PAGE = 5  # Comments pagination
 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 
-# Ensure directories exist
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(DATA_FOLDER, exist_ok=True)
+# Migrate existing data on startup (if available)
+try:
+    if os.path.exists('data') or os.path.exists('uploads'):
+        logging.info("Found local data folders, attempting migration to Vercel blob storage...")
+        migration_success = storage_service.migrate_local_data()
+        if migration_success:
+            logging.info("Successfully migrated local data to Vercel blob storage")
+        else:
+            logging.warning("Migration completed with some errors - check logs for details")
+    else:
+        logging.info("No local data found, starting fresh with Vercel blob storage")
+except Exception as e:
+    logging.error(f"Error during migration: {e}")
+    logging.info("Continuing with Vercel blob storage anyway")
 
 def allowed_file(filename):
     """Check if file extension is allowed"""
