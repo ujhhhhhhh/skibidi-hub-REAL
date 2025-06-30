@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Create Skibidi Post - Community Hub{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="sigma-container">
+            <h2 class="text-center mb-4">
+                <span class="toilet-decoration"></span>
+                Create Your Skibidi Post
+                <span class="camera-decoration"></span>
+            </h2>
+            
+            <p class="text-center text-muted mb-4">
+                Drop your most sigma brainrot content for the Ohio community! 🚽📸⚡
+            </p>
+
+            <!-- Post Creation Form -->
+            <form method="POST" enctype="multipart/form-data" class="sigma-form">
+                <!-- Username Field -->
+                <div class="mb-4">
+                    <label for="username" class="form-label">
+                        <i class="fas fa-user"></i>
+                        <strong>Your Skibidi Username</strong>
+                    </label>
+                    <input type="text" 
+                           class="form-control sigma-input" 
+                           id="username" 
+                           name="username" 
+                           placeholder="Enter your sigma username (e.g., SkibidiSigma69, OhioRizzLord)"
+                           required
+                           maxlength="50">
+                    <div class="form-text">
+                        <i class="fas fa-info-circle"></i>
+                        Choose a username that represents your brainrot energy!
+                    </div>
+                </div>
+
+                <!-- Content Field -->
+                <div class="mb-4">
+                    <label for="content" class="form-label">
+                        <i class="fas fa-edit"></i>
+                        <strong>Your Skibidi Content</strong>
+                    </label>
+                    <textarea class="form-control sigma-textarea" 
+                              id="content" 
+                              name="content" 
+                              rows="6"
+                              placeholder="Share your most Ohio brainrot thoughts...
+
+Examples:
+- Yo this toilet cam footage is absolutely bussin! 🚽📸
+- Just saw the most sigma Skibidi moment in Ohio fr fr 💀
+- That camera head was giving major rizz energy ngl ⚡
+- Skibidi bop bop yes yes! This community is goated! 🔥
+
+Drop your thoughts about Skibidi Toilets, camera heads, or any Ohio-level content!"
+                              required></textarea>
+                    <!-- Character counter will be added by JavaScript -->
+                </div>
+
+                <!-- File Upload -->
+                <div class="mb-4">
+                    <label for="file" class="form-label">
+                        <i class="fas fa-file-upload"></i>
+                        <strong>Upload Skibidi Content (Optional)</strong>
+                    </label>
+                    
+                    <div class="file-upload-area">
+                        <div class="skibidi-emoji">📁</div>
+                        <p><strong>Drag & drop your Skibidi files here</strong></p>
+                        <p class="text-muted">Or click to select files</p>
+                        <p class="text-muted small">
+                            <i class="fas fa-info-circle"></i>
+                            Max file size: 25MB | Supported: Images, Videos, Audio, Documents
+                        </p>
+                    </div>
+                    
+                    <input type="file" 
+                           class="form-control" 
+                           id="file" 
+                           name="file" 
+                           accept=".jpg,.jpeg,.png,.gif,.mp4,.webm,.mp3,.wav,.pdf,.txt,.doc,.docx,.zip"
+                           style="display: none;">
+                </div>
+
+                <!-- Brainrot Guidelines -->
+                <div class="alert alert-info mb-4">
+                    <h6><i class="fas fa-lightbulb"></i> Skibidi Posting Guidelines:</h6>
+                    <ul class="mb-0">
+                        <li>Keep it sigma and Ohio-approved! 🚽</li>
+                        <li>Max text content: 2KB (perfect for brainrot thoughts)</li>
+                        <li>File uploads under 25MB (share those Skibidi clips!)</li>
+                        <li>Respect the community - no sus content!</li>
+                        <li>Embrace the brainrot energy! ⚡</li>
+                    </ul>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="text-center">
+                    <button type="submit" class="rizz-btn me-3">
+                        <i class="fas fa-paper-plane"></i>
+                        Post to Skibidi Hub
+                    </button>
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Feed
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Community Tips -->
+        <div class="ohio-card mt-4">
+            <h5 class="camera-decoration">Pro Skibidi Tips</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="fas fa-fire"></i> Content Ideas:</h6>
+                    <ul class="text-muted">
+                        <li>Skibidi Toilet memes and reactions</li>
+                        <li>Camera head vs. Toilet battles</li>
+                        <li>Ohio-level brainrot observations</li>
+                        <li>Sigma grindset content</li>
+                        <li>Rizz stories and experiences</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6><i class="fas fa-star"></i> Get More Engagement:</h6>
+                    <ul class="text-muted">
+                        <li>Use brainrot terminology naturally</li>
+                        <li>Share original Skibidi content</li>
+                        <li>Upload high-quality files</li>
+                        <li>Be authentic to the community</li>
+                        <li>Embrace the chaos! 💀</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus username field
+    document.getElementById('username').focus();
+    
+    // Add form validation feedback
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const username = document.getElementById('username').value.trim();
+        const content = document.getElementById('content').value.trim();
+        
+        if (!username || !content) {
+            e.preventDefault();
+            alert('Yo fam, you gotta fill out both username and content! No cap! 🚽');
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Posting your sigma content...';
+        submitBtn.disabled = true;
+        
+        // Re-enable if form validation fails
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 5000);
+    });
+});
+</script>
+{% endblock %}

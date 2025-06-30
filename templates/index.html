@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Skibidi Feed - Community Hub{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Community Stats -->
+        <div class="sigma-container">
+            <h2 class="text-center mb-3">
+                <span class="toilet-decoration"></span>
+                Skibidi Community Feed
+                <span class="camera-decoration"></span>
+            </h2>
+            
+            <div class="skibidi-stats">
+                <div class="stat-item">
+                    <div class="stat-number">{{ posts|length }}</div>
+                    <div class="stat-label">Sigma Posts</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ posts|selectattr('filename')|list|length }}</div>
+                    <div class="stat-label">Ohio Files</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">∞</div>
+                    <div class="stat-label">Rizz Level</div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3">
+                <a href="{{ url_for('create_post_route') }}" class="rizz-btn">
+                    <i class="fas fa-plus-circle"></i> Create Skibidi Post
+                </a>
+            </div>
+        </div>
+
+        <!-- Posts Feed -->
+        {% if posts %}
+            {% for post in posts %}
+            <article class="ohio-card">
+                <!-- Post Header -->
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <div class="skibidi-username">
+                            <i class="fas fa-user-circle"></i>
+                            {{ post.username }}
+                        </div>
+                        <div class="skibidi-timestamp">
+                            <i class="fas fa-clock"></i>
+                            {{ moment(post.timestamp).format('MMMM Do YYYY, h:mm a') if moment else post.timestamp[:19].replace('T', ' ') }}
+                        </div>
+                    </div>
+                    <div class="text-muted">
+                        <i class="fas fa-hashtag"></i>
+                        {{ loop.index }}
+                    </div>
+                </div>
+
+                <!-- Post Content -->
+                <div class="skibidi-content">
+                    {{ post.content }}
+                </div>
+
+                <!-- File Attachment -->
+                {% if post.filename %}
+                <div class="skibidi-file">
+                    <i class="fas fa-paperclip"></i>
+                    <strong>Skibidi Attachment:</strong>
+                    <br>
+                    <a href="{{ url_for('uploaded_file', filename=post.filename) }}" 
+                       target="_blank" 
+                       class="btn btn-sm btn-outline-primary mt-2">
+                        <i class="fas fa-download"></i>
+                        View/Download: {{ post.filename }}
+                    </a>
+                    
+                    <!-- Preview for images -->
+                    {% set file_ext = post.filename.split('.')[-1].lower() %}
+                    {% if file_ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                    <div class="mt-2">
+                        <img src="{{ url_for('uploaded_file', filename=post.filename) }}" 
+                             alt="Skibidi content" 
+                             class="img-fluid rounded"
+                             style="max-height: 300px; cursor: pointer;"
+                             onclick="window.open(this.src, '_blank')">
+                    </div>
+                    {% elif file_ext in ['mp4', 'webm'] %}
+                    <div class="mt-2">
+                        <video controls class="img-fluid rounded" style="max-height: 300px;">
+                            <source src="{{ url_for('uploaded_file', filename=post.filename) }}" type="video/{{ file_ext }}">
+                            Your browser doesn't support video playback. Download the file instead!
+                        </video>
+                    </div>
+                    {% elif file_ext in ['mp3', 'wav'] %}
+                    <div class="mt-2">
+                        <audio controls class="w-100">
+                            <source src="{{ url_for('uploaded_file', filename=post.filename) }}" type="audio/{{ file_ext }}">
+                            Your browser doesn't support audio playback. Download the file instead!
+                        </audio>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Post Footer -->
+                <div class="mt-3 pt-2 border-top">
+                    <small class="text-muted">
+                        <span class="sigma-decoration"></span>
+                        Post ID: {{ post.id[:8] }}... 
+                        | Brainrot Level: {{ post.skibidi_level.title() }}
+                    </small>
+                </div>
+            </article>
+            {% endfor %}
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="skibidi-emoji">🚽💀</div>
+                <h3>No Skibidi posts yet!</h3>
+                <p class="text-muted mb-4">
+                    The community is waiting for your sigma energy!<br>
+                    Be the first to drop some Ohio-level brainrot content!
+                </p>
+                <a href="{{ url_for('create_post_route') }}" class="rizz-btn">
+                    <i class="fas fa-plus-circle"></i>
+                    Create First Post
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Add moment.js for better timestamp formatting
+document.addEventListener('DOMContentLoaded', function() {
+    // If moment.js is not available, format timestamps client-side
+    const timestamps = document.querySelectorAll('.skibidi-timestamp');
+    timestamps.forEach(ts => {
+        const timeText = ts.textContent.trim();
+        const isoMatch = timeText.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
+        if (isoMatch) {
+            const date = new Date(isoMatch[0]);
+            const formatted = date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long', 
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+            ts.innerHTML = '<i class="fas fa-clock"></i> ' + formatted;
+        }
+    });
+});
+</script>
+{% endblock %}
