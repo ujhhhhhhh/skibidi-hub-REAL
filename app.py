@@ -58,6 +58,8 @@ if DATABASE_URL:
                 username VARCHAR(100) NOT NULL,
                 content TEXT NOT NULL,
                 filename VARCHAR(255),
+                file_data BYTEA,
+                file_mimetype VARCHAR(100),
                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 skibidi_level VARCHAR(50) DEFAULT 'sigma'
             )
@@ -139,7 +141,7 @@ def get_posts():
     if USE_DATABASE:
         try:
             cursor = db_connection.cursor()
-            cursor.execute("SELECT id, username, content, filename, timestamp, skibidi_level FROM posts ORDER BY timestamp DESC")
+            cursor.execute("SELECT id, username, content, filename, file_data, file_mimetype, timestamp, skibidi_level FROM posts ORDER BY timestamp DESC")
             rows = cursor.fetchall()
             cursor.close()
             
@@ -150,8 +152,10 @@ def get_posts():
                     'username': row[1],
                     'content': row[2],
                     'filename': row[3],
-                    'timestamp': row[4].isoformat() if row[4] else '',
-                    'skibidi_level': row[5] or 'sigma'
+                    'file_data': row[4],
+                    'file_mimetype': row[5],
+                    'timestamp': row[6].isoformat() if row[6] else '',
+                    'skibidi_level': row[7] or 'sigma'
                 })
             return posts
         except Exception as e:
@@ -216,7 +220,7 @@ def get_hall_of_fame():
         try:
             cursor = db_connection.cursor()
             cursor.execute("""
-                SELECT p.id, p.username, p.content, p.filename, p.timestamp, p.skibidi_level 
+                SELECT p.id, p.username, p.content, p.filename, p.file_data, p.file_mimetype, p.timestamp, p.skibidi_level 
                 FROM posts p 
                 INNER JOIN hall_of_fame h ON p.id = h.post_id 
                 ORDER BY h.added_timestamp DESC
@@ -231,8 +235,10 @@ def get_hall_of_fame():
                     'username': row[1],
                     'content': row[2],
                     'filename': row[3],
-                    'timestamp': row[4].isoformat() if row[4] else '',
-                    'skibidi_level': row[5] or 'sigma'
+                    'file_data': row[4],
+                    'file_mimetype': row[5],
+                    'timestamp': row[6].isoformat() if row[6] else '',
+                    'skibidi_level': row[7] or 'sigma'
                 })
             return posts
         except Exception as e:
@@ -247,7 +253,7 @@ def get_hall_of_shame():
         try:
             cursor = db_connection.cursor()
             cursor.execute("""
-                SELECT p.id, p.username, p.content, p.filename, p.timestamp, p.skibidi_level 
+                SELECT p.id, p.username, p.content, p.filename, p.file_data, p.file_mimetype, p.timestamp, p.skibidi_level 
                 FROM posts p 
                 INNER JOIN hall_of_shame h ON p.id = h.post_id 
                 ORDER BY h.added_timestamp DESC
@@ -262,8 +268,10 @@ def get_hall_of_shame():
                     'username': row[1],
                     'content': row[2],
                     'filename': row[3],
-                    'timestamp': row[4].isoformat() if row[4] else '',
-                    'skibidi_level': row[5] or 'sigma'
+                    'file_data': row[4],
+                    'file_mimetype': row[5],
+                    'timestamp': row[6].isoformat() if row[6] else '',
+                    'skibidi_level': row[7] or 'sigma'
                 })
             return posts
         except Exception as e:
@@ -272,14 +280,14 @@ def get_hall_of_shame():
     else:
         return VIRTUAL_STORAGE['hall_of_shame']
 
-def create_post(username, content, filename=None):
+def create_post(username, content, filename=None, file_data=None, file_mimetype=None):
     """Create a new post"""
     if USE_DATABASE:
         try:
             cursor = db_connection.cursor()
             cursor.execute(
-                "INSERT INTO posts (username, content, filename, skibidi_level) VALUES (%s, %s, %s, %s) RETURNING id",
-                (username, content, filename, 'sigma')
+                "INSERT INTO posts (username, content, filename, file_data, file_mimetype, skibidi_level) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+                (username, content, filename, file_data, file_mimetype, 'sigma')
             )
             post_id = cursor.fetchone()[0]
             db_connection.commit()
@@ -298,6 +306,8 @@ def create_post(username, content, filename=None):
         'username': username,
         'content': content,
         'filename': filename,
+        'file_data': file_data,
+        'file_mimetype': file_mimetype,
         'timestamp': datetime.now().isoformat(),
         'skibidi_level': 'sigma'
     }
@@ -511,13 +521,23 @@ def create_post_route():
             return render_template('create_post.html')
         
         filename = None
+        file_data = None
+        file_mimetype = None
+        
         if 'file' in request.files:
             file = request.files['file']
             if file and file.filename and allowed_file(file.filename):
                 filename = str(uuid.uuid4()) + '.' + file.filename.rsplit('.', 1)[1].lower()
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                
+                if USE_DATABASE:
+                    # Store file in database
+                    file_data = file.read()
+                    file_mimetype = file.mimetype
+                else:
+                    # Store file in filesystem (virtual memory fallback)
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         
-        post_id = create_post(username, content, filename)
+        post_id = create_post(username, content, filename, file_data, file_mimetype)
         flash(f'Skibidi post created! ID: {post_id}', 'success')
         return redirect(url_for('index'))
     
@@ -607,7 +627,31 @@ def get_comments_route(post_id):
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     """Serve uploaded files"""
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    if USE_DATABASE:
+        # Serve file from database
+        try:
+            cursor = db_connection.cursor()
+            cursor.execute("SELECT file_data, file_mimetype FROM posts WHERE filename = %s", (filename,))
+            result = cursor.fetchone()
+            cursor.close()
+            
+            if result and result[0]:
+                from flask import Response
+                return Response(
+                    result[0],
+                    mimetype=result[1] or 'application/octet-stream',
+                    headers={'Content-Disposition': f'inline; filename={filename}'}
+                )
+            else:
+                from flask import abort
+                abort(404)
+        except Exception as e:
+            logging.error(f"Error serving file from database: {e}")
+            from flask import abort
+            abort(500)
+    else:
+        # Serve file from filesystem (virtual memory fallback)
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/api/posts')
 def api_posts():
