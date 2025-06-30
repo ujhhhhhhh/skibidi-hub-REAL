@@ -47,7 +47,9 @@ def allowed_file(filename):
 # Virtual storage access functions
 def get_posts():
     """Get all posts from virtual storage"""
-    return VIRTUAL_STORAGE['posts']
+    posts = VIRTUAL_STORAGE['posts']
+    # Sort by timestamp (newest first)
+    return sorted(posts, key=lambda x: x.get('timestamp', ''), reverse=True)
 
 def get_all_comments():
     """Get all comments from virtual storage"""
@@ -100,16 +102,16 @@ def create_post(username, content, filename=None):
     """Create a new post"""
     global POST_ID_COUNTER
     
-    posts = get_posts()
+    posts = VIRTUAL_STORAGE['posts']  # Get directly to avoid sorting
     post = {
         'id': POST_ID_COUNTER,
         'username': username,
         'content': content,
         'filename': filename,
-        'timestamp': datetime.now().isoformat()
+        'timestamp': datetime.now().isoformat(),
+        'skibidi_level': 'sigma'
     }
     posts.append(post)
-    save_posts(posts)
     
     POST_ID_COUNTER += 1
     return post['id']
@@ -221,7 +223,7 @@ def index():
         posts = load_posts()
     
     # Sort posts by timestamp (newest first)
-    posts = sorted(posts, key=lambda x: x['timestamp'], reverse=True)
+    posts = sorted(posts, key=lambda x: x.get('timestamp', ''), reverse=True)
     
     # Paginate posts
     pagination = paginate_posts(posts, page, POSTS_PER_PAGE)
@@ -234,8 +236,16 @@ def index():
         post_id = str(post['id'])
         post['comments_count'] = len(comments_data.get(post_id, []))
         post['likes_count'] = len(likes_data.get(post_id, []))
+        post['like_count'] = len(likes_data.get(post_id, []))
+        post['comment_count'] = len(comments_data.get(post_id, []))
+        
+        # Add comments data for the template
+        post_comments = comments_data.get(post_id, [])
+        post_comments_sorted = sorted(post_comments, key=lambda x: x.get('timestamp', ''), reverse=True)
+        post['comments_data'] = post_comments_sorted
     
     return render_template('index.html', 
+                         posts=pagination['posts'],
                          pagination=pagination,
                          search_query=search_query)
 
@@ -321,14 +331,14 @@ def hall_of_shame():
     return render_template('hall_of_shame.html', posts=hall_posts)
 
 @app.route('/api/comments/<int:post_id>')
-def get_comments(post_id):
+def get_comments_api(post_id):
     """Get paginated comments for a post"""
     page = request.args.get('page', 1, type=int)
     comments_data = load_comments()
     post_comments = comments_data.get(str(post_id), [])
     
     # Sort comments by timestamp (newest first)
-    post_comments = sorted(post_comments, key=lambda x: x['timestamp'], reverse=True)
+    post_comments = sorted(post_comments, key=lambda x: x.get('timestamp', ''), reverse=True)
     
     pagination = paginate_comments(post_comments, page, COMMENTS_PER_PAGE)
     
@@ -339,8 +349,14 @@ def get_comments(post_id):
         'next_num': pagination['next_num'],
         'prev_num': pagination['prev_num'],
         'page': pagination['page'],
-        'total_pages': pagination['total_pages']
+        'total_pages': pagination['total_pages'],
+        'pagination': pagination
     })
+
+@app.route('/comments/<int:post_id>')
+def get_comments_route(post_id):
+    """Alternative route for comments (for JavaScript fetch)"""
+    return get_comments_api(post_id)
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):

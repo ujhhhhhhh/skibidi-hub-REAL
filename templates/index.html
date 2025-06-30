@@ -538,7 +538,7 @@ function loadComments(postId, page = 1) {
     // Show loading
     loadingDiv.style.display = 'block';
     
-    fetch(`/comments/${postId}?page=${page}`)
+    fetch(`/api/comments/${postId}?page=${page}`)
         .then(response => response.json())
         .then(data => {
             // Hide loading
