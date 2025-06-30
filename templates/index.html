@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Skibidi Feed - Community Hub{% endblock %}
+{% block title %}Skibidi Feed - Skibidi Hub{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -65,6 +65,48 @@
                 <a href="{{ url_for('hall_of_shame') }}" class="rizz-btn">
                     <i class="fas fa-skull"></i> Hall of Shame
                 </a>
+            </div>
+        </div>
+        
+        <!-- Discord Popup Modal -->
+        <div class="modal fade" id="discordModal" tabindex="-1" aria-labelledby="discordModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="background: linear-gradient(135deg, var(--skibidi-blue), var(--sigma-purple)); border: 3px solid var(--camera-orange); border-radius: 20px;">
+                    <div class="modal-header border-0 text-white">
+                        <h5 class="modal-title" id="discordModalLabel">
+                            <i class="fab fa-discord"></i> Join Our Sigma Discord Server! 🚽⚡
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-white text-center">
+                        <div class="mb-3">
+                            <i class="fab fa-discord" style="font-size: 3rem; color: #7289da;"></i>
+                        </div>
+                        <h6 class="mb-3">Connect with the most Ohio-level Skibidi community!</h6>
+                        <p class="mb-3">
+                            Join our Discord server for:
+                        </p>
+                        <ul class="list-unstyled mb-4">
+                            <li><i class="fas fa-fire"></i> Exclusive sigma content drops</li>
+                            <li><i class="fas fa-users"></i> Real-time brainrot discussions</li>
+                            <li><i class="fas fa-trophy"></i> Special roles and perks</li>
+                            <li><i class="fas fa-bell"></i> First access to new features</li>
+                        </ul>
+                        <a href="https://discord.gg/9TN4VvEhH9" target="_blank" class="btn btn-lg" 
+                           style="background: #7289da; color: white; border-radius: 25px; font-weight: bold; padding: 12px 30px;">
+                            <i class="fab fa-discord"></i> Join Discord Server
+                        </a>
+                        <br><br>
+                        <small class="text-light opacity-75">
+                            Don't worry, we won't spam you with notifications! This popup only appears every 15 minutes.
+                        </small>
+                    </div>
+                    <div class="modal-footer border-0 justify-content-center">
+                        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">
+                            Maybe Later
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -328,6 +370,9 @@
 <script>
 // Add moment.js for better timestamp formatting
 document.addEventListener('DOMContentLoaded', function() {
+    // Check and show Discord popup on home page only
+    checkAndShowDiscordPopup();
+    
     // If moment.js is not available, format timestamps client-side
     const timestamps = document.querySelectorAll('.skibidi-timestamp');
     timestamps.forEach(ts => {
@@ -346,6 +391,54 @@ document.addEventListener('DOMContentLoaded', function() {
             ts.innerHTML = '<i class="fas fa-clock"></i> ' + formatted;
         }
     });
+});
+
+// Discord popup functionality
+function checkAndShowDiscordPopup() {
+    // Only show on home page (check if we're on the main index route)
+    if (window.location.pathname !== '/' && window.location.pathname !== '') {
+        return;
+    }
+    
+    const COOLDOWN_MINUTES = 15;
+    const STORAGE_KEY = 'discord_popup_last_shown';
+    
+    // Get last shown timestamp from localStorage
+    const lastShown = localStorage.getItem(STORAGE_KEY);
+    const now = new Date().getTime();
+    
+    // Check if enough time has passed (15 minutes = 900000 milliseconds)
+    if (!lastShown || (now - parseInt(lastShown)) > (COOLDOWN_MINUTES * 60 * 1000)) {
+        // Show the popup after a short delay
+        setTimeout(() => {
+            const discordModal = new bootstrap.Modal(document.getElementById('discordModal'));
+            discordModal.show();
+            
+            // Store current timestamp
+            localStorage.setItem(STORAGE_KEY, now.toString());
+        }, 2000); // 2 second delay after page load
+    }
+}
+
+// Track Discord modal events
+document.addEventListener('DOMContentLoaded', function() {
+    const discordModal = document.getElementById('discordModal');
+    if (discordModal) {
+        // Track when user clicks Discord link
+        const discordLink = discordModal.querySelector('a[href*="discord.gg"]');
+        if (discordLink) {
+            discordLink.addEventListener('click', function() {
+                console.log('🚽 User clicked Discord link! Sigma energy! ⚡');
+                // Optional: Track this event for analytics
+            });
+        }
+        
+        // Add some animation when modal shows
+        discordModal.addEventListener('shown.bs.modal', function() {
+            const modalContent = discordModal.querySelector('.modal-content');
+            modalContent.style.animation = 'skibidiSlideIn 0.5s ease-out';
+        });
+    }
 });
 
 // Toggle like form visibility

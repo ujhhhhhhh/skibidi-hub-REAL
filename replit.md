@@ -1,4 +1,4 @@
-# Skibidi Toilet Community Hub
+# Skibidi Hub
 
 ## Overview
 
@@ -116,6 +116,12 @@ This is a Flask-based community hub application themed around internet memes and
   - AJAX loading for comments with smooth animations
   - Individual comment pagination controls per post
   - Improved mobile responsiveness for comment interactions
+- June 30, 2025. Discord integration and rebranding:
+  - Rebranded from "Skibidi Toilet Community Hub" to "Skibidi Hub"
+  - Added Discord server promotion popup on home page
+  - Smart popup system with 15-minute cooldown using localStorage
+  - Discord popup only appears on home page with animated design
+  - Direct link to Discord server: https://discord.gg/9TN4VvEhH9
 
 ## User Preferences
 
