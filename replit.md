@@ -20,14 +20,14 @@ This is a Flask-based community hub application themed around internet memes and
 - **Error Handling**: Basic exception handling with user-friendly flash messages
 
 ### Data Storage
-- **Primary Storage**: JSON file-based system with multiple data files:
-  - `data/posts.json` - Main posts content and metadata
-  - `data/comments.json` - User comments organized by post ID
-  - `data/likes.json` - Like counts and user tracking by post ID
-  - `data/hall_of_fame.json` - Owner-curated legendary posts
-  - `data/hall_of_shame.json` - Owner-curated shameful posts
-- **File Storage**: Local filesystem storage in `uploads/` directory
-- **No Database**: Uses file-based storage for simplicity and direct control
+- **Primary Storage**: Virtual in-memory storage using Python dictionaries and lists:
+  - `VIRTUAL_STORAGE['posts']` - Main posts content and metadata
+  - `VIRTUAL_STORAGE['comments']` - User comments organized by post ID
+  - `VIRTUAL_STORAGE['likes']` - Like counts and user tracking by post ID
+  - `VIRTUAL_STORAGE['hall_of_fame']` - Owner-curated legendary posts
+  - `VIRTUAL_STORAGE['hall_of_shame']` - Owner-curated shameful posts
+- **File Storage**: Local filesystem storage in `uploads/` directory for uploaded files only
+- **Virtual Memory**: All data exists only during runtime, resets on app restart
 
 ## Key Components
 
@@ -138,6 +138,11 @@ This is a Flask-based community hub application themed around internet memes and
   - Created wsgi.py entry point for production deployment
   - Added dependencies.txt with exact package versions
   - Created comprehensive README.md with deployment instructions
+- June 30, 2025. Virtual storage implementation:
+  - Converted from file-based JSON storage to virtual in-memory storage
+  - All data now stored in Python dictionaries during runtime
+  - Data resets on application restart (no persistence)
+  - Only uploaded files remain on filesystem
 
 ## User Preferences
 
