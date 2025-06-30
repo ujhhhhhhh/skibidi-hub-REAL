@@ -95,7 +95,7 @@ class VercelBlobStorage:
             
         except Exception as e:
             logging.error(f"Error retrieving JSON data {file_key}: {e}")
-            return default if default is not None else ([] if file_key in ['posts'] else {})
+            return default if default is not None else ([] if file_key in ['posts', 'hall_of_fame', 'hall_of_shame'] else {})
     
     def put_file(self, file_content: bytes, filename: str, content_type: Optional[str] = None) -> Optional[str]:
         """

@@ -91,7 +91,12 @@ def load_comments():
 def load_likes():
     """Load all likes from Vercel blob storage"""
     try:
-        return storage_service.get_json_data('likes', {})
+        data = storage_service.get_json_data('likes', {})
+        # Ensure data is a dictionary, not a list
+        if isinstance(data, list):
+            logging.warning("Likes data is a list, converting to empty dict")
+            return {}
+        return data
     except Exception as e:
         logging.error(f"Error loading likes: {e}")
         return {}
