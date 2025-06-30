@@ -15,7 +15,7 @@ body {
     background: linear-gradient(135deg, var(--skibidi-blue) 0%, var(--skibidi-grey) 100%);
     font-family: 'Arial', sans-serif;
     min-height: 100vh;
-    color: #1f2937;
+    color: #ffffff;
 }
 
 .skibidi-header {
@@ -46,6 +46,7 @@ body {
     margin-bottom: 2rem;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
     border: 3px solid var(--skibidi-blue);
+    color: #1f2937;
 }
 
 .ohio-card {
@@ -56,6 +57,7 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-left: 5px solid var(--skibidi-blue);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    color: #1f2937;
 }
 
 .ohio-card:hover {
@@ -218,7 +220,10 @@ body {
 .empty-state {
     text-align: center;
     padding: 3rem;
-    color: var(--skibidi-grey);
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
 }
 
 .empty-state .skibidi-emoji {
@@ -375,7 +380,24 @@ body {
 
 /* Mobile responsive improvements */
 @media (max-width: 768px) {
-    .d-flex.gap-2, .d-flex.gap-3 {
+    .skibidi-title {
+        font-size: 2rem;
+    }
+    
+    .sigma-container {
+        padding: 1rem;
+        margin: 0.5rem;
+    }
+    
+    .ohio-card {
+        padding: 1rem;
+    }
+    
+    .file-upload-area {
+        padding: 1rem;
+    }
+    
+    .d-flex.gap-2:not(.flex-wrap), .d-flex.gap-3:not(.flex-wrap) {
         flex-direction: column;
         gap: 0.5rem !important;
     }
@@ -389,8 +411,16 @@ body {
         padding: 0.75rem;
     }
     
-    .btn btn-outline-warning, .btn btn-outline-danger {
-        margin-bottom: 0.5rem;
+    /* Header navigation responsive */
+    .d-flex.flex-wrap.justify-content-end {
+        justify-content: center !important;
+        gap: 0.25rem !important;
+    }
+    
+    .d-flex.flex-wrap.justify-content-end .rizz-btn,
+    .d-flex.flex-wrap.justify-content-end .btn {
+        font-size: 0.85rem;
+        padding: 0.375rem 0.75rem;
     }
 }
 
@@ -433,4 +463,54 @@ body {
     background: rgba(255, 215, 0, 0.3);
     padding: 0.1rem 0.2rem;
     border-radius: 3px;
+}
+
+/* Navigation button layout fixes */
+.d-flex.flex-wrap.justify-content-end {
+    align-items: center;
+    flex-wrap: nowrap !important;
+    gap: 0.25rem !important;
+}
+
+.d-flex.flex-wrap.justify-content-end .rizz-btn,
+.d-flex.flex-wrap.justify-content-end .btn {
+    white-space: nowrap;
+    min-width: auto;
+    flex-shrink: 0;
+    font-size: 0.9rem;
+    padding: 0.375rem 0.75rem;
+}
+
+/* Force single line layout on larger screens */
+@media (min-width: 992px) {
+    .d-flex.flex-wrap.justify-content-end {
+        flex-wrap: nowrap !important;
+    }
+}
+
+/* Text contrast improvements */
+.text-muted {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.sigma-container .text-muted {
+    color: #6b7280 !important;
+}
+
+.ohio-card .text-muted {
+    color: #6b7280 !important;
+}
+
+/* Footer text contrast */
+footer {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Ensure readable text in all containers */
+.sigma-form {
+    color: #1f2937;
+}
+
+.like-form, .comment-form {
+    color: #1f2937;
 }

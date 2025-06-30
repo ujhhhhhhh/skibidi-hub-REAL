@@ -31,18 +31,20 @@
                     </p>
                 </div>
                 <div class="col-md-4 text-end">
-                    <a href="{{ url_for('index') }}" class="rizz-btn me-1">
-                        <i class="fas fa-home"></i> Feed
-                    </a>
-                    <a href="{{ url_for('create_post_route') }}" class="rizz-btn me-1">
-                        <i class="fas fa-plus"></i> Post
-                    </a>
-                    <a href="{{ url_for('hall_of_fame') }}" class="btn btn-outline-warning me-1" style="border-radius: 25px;">
-                        <i class="fas fa-trophy"></i> Fame
-                    </a>
-                    <a href="{{ url_for('hall_of_shame') }}" class="btn btn-outline-danger" style="border-radius: 25px;">
-                        <i class="fas fa-skull"></i> Shame
-                    </a>
+                    <div class="d-flex flex-wrap justify-content-end gap-1">
+                        <a href="{{ url_for('index') }}" class="rizz-btn">
+                            <i class="fas fa-home"></i> Feed
+                        </a>
+                        <a href="{{ url_for('create_post_route') }}" class="rizz-btn">
+                            <i class="fas fa-plus"></i> Post
+                        </a>
+                        <a href="{{ url_for('hall_of_fame') }}" class="btn btn-outline-warning" style="border-radius: 25px; font-weight: bold;">
+                            <i class="fas fa-trophy"></i> Fame
+                        </a>
+                        <a href="{{ url_for('hall_of_shame') }}" class="btn btn-outline-danger" style="border-radius: 25px; font-weight: bold;">
+                            <i class="fas fa-skull"></i> Shame
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
