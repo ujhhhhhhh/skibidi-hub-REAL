@@ -1,3 +1,4 @@
+
 import os
 import uuid
 import logging
@@ -27,7 +28,95 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 # Ensure upload directory exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# In-memory virtual storage - all data stored in Python dictionaries/lists
+# Database setup with fallback to virtual memory
+DATABASE_URL = os.environ.get('DATABASE_URL')
+USE_DATABASE = False
+db_connection = None
+
+if DATABASE_URL:
+    try:
+        import psycopg2
+        from urllib.parse import urlparse
+        
+        # Parse database URL
+        url = urlparse(DATABASE_URL)
+        db_connection = psycopg2.connect(
+            database=url.path[1:],
+            user=url.username,
+            password=url.password,
+            host=url.hostname,
+            port=url.port
+        )
+        
+        # Initialize database tables
+        cursor = db_connection.cursor()
+        
+        # Create posts table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS posts (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(100) NOT NULL,
+                content TEXT NOT NULL,
+                filename VARCHAR(255),
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                skibidi_level VARCHAR(50) DEFAULT 'sigma'
+            )
+        ''')
+        
+        # Create comments table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS comments (
+                id SERIAL PRIMARY KEY,
+                post_id INTEGER REFERENCES posts(id),
+                username VARCHAR(100) NOT NULL,
+                content TEXT NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Create likes table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS likes (
+                id SERIAL PRIMARY KEY,
+                post_id INTEGER REFERENCES posts(id),
+                username VARCHAR(100) NOT NULL,
+                UNIQUE(post_id, username)
+            )
+        ''')
+        
+        # Create hall tables
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS hall_of_fame (
+                id SERIAL PRIMARY KEY,
+                post_id INTEGER REFERENCES posts(id),
+                added_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS hall_of_shame (
+                id SERIAL PRIMARY KEY,
+                post_id INTEGER REFERENCES posts(id),
+                added_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        db_connection.commit()
+        cursor.close()
+        USE_DATABASE = True
+        logging.info("Database connected successfully!")
+        
+    except Exception as e:
+        logging.error(f"Database connection failed: {e}")
+        logging.info("Falling back to virtual memory storage")
+        USE_DATABASE = False
+        if db_connection:
+            db_connection.close()
+            db_connection = None
+else:
+    logging.info("No DATABASE_URL found, using virtual memory storage")
+
+# Virtual memory storage (fallback)
 VIRTUAL_STORAGE = {
     'posts': [],
     'comments': {},  # post_id -> list of comments
@@ -36,7 +125,7 @@ VIRTUAL_STORAGE = {
     'hall_of_shame': []
 }
 
-# Counter for generating unique post IDs
+# Counter for generating unique post IDs in virtual mode
 POST_ID_COUNTER = 1
 
 def allowed_file(filename):
@@ -44,65 +133,166 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Virtual storage access functions
+# Database functions
 def get_posts():
-    """Get all posts from virtual storage"""
-    posts = VIRTUAL_STORAGE['posts']
-    # Sort by timestamp (newest first)
-    return sorted(posts, key=lambda x: x.get('timestamp', ''), reverse=True)
-
-def get_all_comments():
-    """Get all comments from virtual storage"""
-    return VIRTUAL_STORAGE['comments']
-
-def get_likes():
-    """Get all likes from virtual storage"""
-    return VIRTUAL_STORAGE['likes']
-
-def get_hall_of_fame():
-    """Get hall of fame posts from virtual storage"""
-    return VIRTUAL_STORAGE['hall_of_fame']
-
-def get_hall_of_shame():
-    """Get hall of shame posts from virtual storage"""
-    return VIRTUAL_STORAGE['hall_of_shame']
-
-def save_posts(posts):
-    """Save posts to virtual storage"""
-    VIRTUAL_STORAGE['posts'] = posts
-
-def save_comments(comments):
-    """Save comments to virtual storage"""
-    VIRTUAL_STORAGE['comments'] = comments
+    """Get all posts"""
+    if USE_DATABASE:
+        try:
+            cursor = db_connection.cursor()
+            cursor.execute("SELECT id, username, content, filename, timestamp, skibidi_level FROM posts ORDER BY timestamp DESC")
+            rows = cursor.fetchall()
+            cursor.close()
+            
+            posts = []
+            for row in rows:
+                posts.append({
+                    'id': row[0],
+                    'username': row[1],
+                    'content': row[2],
+                    'filename': row[3],
+                    'timestamp': row[4].isoformat() if row[4] else '',
+                    'skibidi_level': row[5] or 'sigma'
+                })
+            return posts
+        except Exception as e:
+            logging.error(f"Database error in get_posts: {e}")
+            return VIRTUAL_STORAGE['posts']
+    else:
+        # Sort by timestamp (newest first)
+        return sorted(VIRTUAL_STORAGE['posts'], key=lambda x: x.get('timestamp', ''), reverse=True)
 
 def get_comments():
-    """Get all comments from virtual storage - compatibility function"""
-    return VIRTUAL_STORAGE['comments']
+    """Get all comments"""
+    if USE_DATABASE:
+        try:
+            cursor = db_connection.cursor()
+            cursor.execute("SELECT id, post_id, username, content, timestamp FROM comments ORDER BY timestamp DESC")
+            rows = cursor.fetchall()
+            cursor.close()
+            
+            comments = {}
+            for row in rows:
+                post_id = str(row[1])
+                if post_id not in comments:
+                    comments[post_id] = []
+                comments[post_id].append({
+                    'id': row[0],
+                    'username': row[2],
+                    'content': row[3],
+                    'timestamp': row[4].isoformat() if row[4] else ''
+                })
+            return comments
+        except Exception as e:
+            logging.error(f"Database error in get_comments: {e}")
+            return VIRTUAL_STORAGE['comments']
+    else:
+        return VIRTUAL_STORAGE['comments']
 
-def save_likes(likes):
-    """Save likes to virtual storage"""
-    VIRTUAL_STORAGE['likes'] = likes
+def get_likes():
+    """Get all likes"""
+    if USE_DATABASE:
+        try:
+            cursor = db_connection.cursor()
+            cursor.execute("SELECT post_id, username FROM likes")
+            rows = cursor.fetchall()
+            cursor.close()
+            
+            likes = {}
+            for row in rows:
+                post_id = str(row[0])
+                if post_id not in likes:
+                    likes[post_id] = []
+                likes[post_id].append(row[1])
+            return likes
+        except Exception as e:
+            logging.error(f"Database error in get_likes: {e}")
+            return VIRTUAL_STORAGE['likes']
+    else:
+        return VIRTUAL_STORAGE['likes']
 
-def save_hall_of_fame(hall_posts):
-    """Save hall of fame to virtual storage"""
-    VIRTUAL_STORAGE['hall_of_fame'] = hall_posts
+def get_hall_of_fame():
+    """Get hall of fame posts"""
+    if USE_DATABASE:
+        try:
+            cursor = db_connection.cursor()
+            cursor.execute("""
+                SELECT p.id, p.username, p.content, p.filename, p.timestamp, p.skibidi_level 
+                FROM posts p 
+                INNER JOIN hall_of_fame h ON p.id = h.post_id 
+                ORDER BY h.added_timestamp DESC
+            """)
+            rows = cursor.fetchall()
+            cursor.close()
+            
+            posts = []
+            for row in rows:
+                posts.append({
+                    'id': row[0],
+                    'username': row[1],
+                    'content': row[2],
+                    'filename': row[3],
+                    'timestamp': row[4].isoformat() if row[4] else '',
+                    'skibidi_level': row[5] or 'sigma'
+                })
+            return posts
+        except Exception as e:
+            logging.error(f"Database error in get_hall_of_fame: {e}")
+            return VIRTUAL_STORAGE['hall_of_fame']
+    else:
+        return VIRTUAL_STORAGE['hall_of_fame']
 
-def save_hall_of_shame(hall_posts):
-    """Save hall of shame to virtual storage"""
-    VIRTUAL_STORAGE['hall_of_shame'] = hall_posts
-
-# Compatibility functions for existing code
-load_posts = get_posts
-load_comments = get_comments
-load_likes = get_likes
-load_hall_of_fame = get_hall_of_fame
-load_hall_of_shame = get_hall_of_shame
+def get_hall_of_shame():
+    """Get hall of shame posts"""
+    if USE_DATABASE:
+        try:
+            cursor = db_connection.cursor()
+            cursor.execute("""
+                SELECT p.id, p.username, p.content, p.filename, p.timestamp, p.skibidi_level 
+                FROM posts p 
+                INNER JOIN hall_of_shame h ON p.id = h.post_id 
+                ORDER BY h.added_timestamp DESC
+            """)
+            rows = cursor.fetchall()
+            cursor.close()
+            
+            posts = []
+            for row in rows:
+                posts.append({
+                    'id': row[0],
+                    'username': row[1],
+                    'content': row[2],
+                    'filename': row[3],
+                    'timestamp': row[4].isoformat() if row[4] else '',
+                    'skibidi_level': row[5] or 'sigma'
+                })
+            return posts
+        except Exception as e:
+            logging.error(f"Database error in get_hall_of_shame: {e}")
+            return VIRTUAL_STORAGE['hall_of_shame']
+    else:
+        return VIRTUAL_STORAGE['hall_of_shame']
 
 def create_post(username, content, filename=None):
     """Create a new post"""
-    global POST_ID_COUNTER
+    if USE_DATABASE:
+        try:
+            cursor = db_connection.cursor()
+            cursor.execute(
+                "INSERT INTO posts (username, content, filename, skibidi_level) VALUES (%s, %s, %s, %s) RETURNING id",
+                (username, content, filename, 'sigma')
+            )
+            post_id = cursor.fetchone()[0]
+            db_connection.commit()
+            cursor.close()
+            return post_id
+        except Exception as e:
+            logging.error(f"Database error in create_post: {e}")
+            # Fallback to virtual storage
+            pass
     
-    posts = VIRTUAL_STORAGE['posts']  # Get directly to avoid sorting
+    # Virtual storage
+    global POST_ID_COUNTER
+    posts = VIRTUAL_STORAGE['posts']
     post = {
         'id': POST_ID_COUNTER,
         'username': username,
@@ -112,14 +302,35 @@ def create_post(username, content, filename=None):
         'skibidi_level': 'sigma'
     }
     posts.append(post)
-    
     POST_ID_COUNTER += 1
     return post['id']
 
 def add_comment(post_id, username, comment_content):
     """Add a comment to a post"""
-    comments = get_comments()
+    if USE_DATABASE:
+        try:
+            cursor = db_connection.cursor()
+            cursor.execute(
+                "INSERT INTO comments (post_id, username, content) VALUES (%s, %s, %s) RETURNING id",
+                (post_id, username, comment_content)
+            )
+            comment_id = cursor.fetchone()[0]
+            db_connection.commit()
+            cursor.close()
+            
+            return {
+                'id': comment_id,
+                'username': username,
+                'content': comment_content,
+                'timestamp': datetime.now().isoformat()
+            }
+        except Exception as e:
+            logging.error(f"Database error in add_comment: {e}")
+            # Fallback to virtual storage
+            pass
     
+    # Virtual storage
+    comments = VIRTUAL_STORAGE['comments']
     if str(post_id) not in comments:
         comments[str(post_id)] = []
     
@@ -131,12 +342,41 @@ def add_comment(post_id, username, comment_content):
     }
     
     comments[str(post_id)].append(comment)
-    save_comments(comments)
     return comment
 
 def toggle_like(post_id, username):
     """Toggle like for a post by username"""
-    likes = get_likes()
+    if USE_DATABASE:
+        try:
+            cursor = db_connection.cursor()
+            
+            # Check if like exists
+            cursor.execute("SELECT id FROM likes WHERE post_id = %s AND username = %s", (post_id, username))
+            existing = cursor.fetchone()
+            
+            if existing:
+                # Remove like
+                cursor.execute("DELETE FROM likes WHERE post_id = %s AND username = %s", (post_id, username))
+                liked = False
+            else:
+                # Add like
+                cursor.execute("INSERT INTO likes (post_id, username) VALUES (%s, %s)", (post_id, username))
+                liked = True
+            
+            # Get total likes count
+            cursor.execute("SELECT COUNT(*) FROM likes WHERE post_id = %s", (post_id,))
+            total_likes = cursor.fetchone()[0]
+            
+            db_connection.commit()
+            cursor.close()
+            return liked, total_likes
+        except Exception as e:
+            logging.error(f"Database error in toggle_like: {e}")
+            # Fallback to virtual storage
+            pass
+    
+    # Virtual storage
+    likes = VIRTUAL_STORAGE['likes']
     post_id_str = str(post_id)
     
     if post_id_str not in likes:
@@ -149,7 +389,6 @@ def toggle_like(post_id, username):
         likes[post_id_str].append(username)
         liked = True
     
-    save_likes(likes)
     return liked, len(likes[post_id_str])
 
 def search_posts(query):
@@ -205,6 +444,13 @@ def paginate_comments(comments, page, per_page):
         'next_num': page + 1 if page < total_pages else None
     }
 
+# Compatibility functions
+load_posts = get_posts
+load_comments = get_comments
+load_likes = get_likes
+load_hall_of_fame = get_hall_of_fame
+load_hall_of_shame = get_hall_of_shame
+
 @app.errorhandler(RequestEntityTooLarge)
 def handle_file_too_large(e):
     """Handle file too large error"""
@@ -220,17 +466,14 @@ def index():
     if search_query:
         posts = search_posts(search_query)
     else:
-        posts = load_posts()
-    
-    # Sort posts by timestamp (newest first)
-    posts = sorted(posts, key=lambda x: x.get('timestamp', ''), reverse=True)
+        posts = get_posts()
     
     # Paginate posts
     pagination = paginate_posts(posts, page, POSTS_PER_PAGE)
     
     # Get comments and likes for each post
-    comments_data = load_comments()
-    likes_data = load_likes()
+    comments_data = get_comments()
+    likes_data = get_likes()
     
     for post in pagination['posts']:
         post_id = str(post['id'])
@@ -244,10 +487,13 @@ def index():
         post_comments_sorted = sorted(post_comments, key=lambda x: x.get('timestamp', ''), reverse=True)
         post['comments_data'] = post_comments_sorted
     
+    storage_type = "Database" if USE_DATABASE else "Virtual Memory"
+    
     return render_template('index.html', 
                          posts=pagination['posts'],
                          pagination=pagination,
-                         search_query=search_query)
+                         search_query=search_query,
+                         storage_type=storage_type)
 
 @app.route('/create', methods=['GET', 'POST'])
 def create_post_route():
@@ -321,20 +567,20 @@ def add_comment_route(post_id):
 @app.route('/hall-of-fame')
 def hall_of_fame():
     """Hall of Fame page"""
-    hall_posts = load_hall_of_fame()
+    hall_posts = get_hall_of_fame()
     return render_template('hall_of_fame.html', posts=hall_posts)
 
 @app.route('/hall-of-shame')
 def hall_of_shame():
     """Hall of Shame page"""
-    hall_posts = load_hall_of_shame()
+    hall_posts = get_hall_of_shame()
     return render_template('hall_of_shame.html', posts=hall_posts)
 
 @app.route('/api/comments/<int:post_id>')
 def get_comments_api(post_id):
     """Get paginated comments for a post"""
     page = request.args.get('page', 1, type=int)
-    comments_data = load_comments()
+    comments_data = get_comments()
     post_comments = comments_data.get(str(post_id), [])
     
     # Sort comments by timestamp (newest first)
@@ -366,7 +612,7 @@ def uploaded_file(filename):
 @app.route('/api/posts')
 def api_posts():
     """API endpoint for posts (if needed for AJAX)"""
-    posts = load_posts()
+    posts = get_posts()
     return jsonify(posts)
 
 if __name__ == '__main__':
