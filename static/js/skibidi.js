@@ -243,8 +243,8 @@ function addSkibidiEasterEggs() {
 // Initialize easter eggs
 addSkibidiEasterEggs();
 
-// Global functions for post interactions
-function toggleLikeForm(postId) {
+// Expose functions to global window object for onclick handlers
+window.toggleLikeForm = function toggleLikeForm(postId) {
     console.log('toggleLikeForm called for postId:', postId);
     const likeForm = document.getElementById('like-form-' + postId);
     const commentForm = document.getElementById('comment-form-' + postId);
@@ -273,7 +273,7 @@ function toggleLikeForm(postId) {
     }
 }
 
-function toggleCommentForm(postId) {
+window.toggleCommentForm = function toggleCommentForm(postId) {
     console.log('toggleCommentForm called for postId:', postId);
     const commentForm = document.getElementById('comment-form-' + postId);
     const likeForm = document.getElementById('like-form-' + postId);
@@ -302,7 +302,7 @@ function toggleCommentForm(postId) {
     }
 }
 
-function toggleComments(postId) {
+window.toggleComments = function toggleComments(postId) {
     const commentsSection = document.getElementById('comments-section-' + postId);
     const toggleIcon = document.getElementById('toggle-icon-' + postId);
     const toggleText = document.getElementById('toggle-text-' + postId);

@@ -1,0 +1,101 @@
+[2025-06-30 19:58:33 +0000] [3962] [INFO] Starting gunicorn 23.0.0
+[2025-06-30 19:58:33 +0000] [3962] [INFO] Listening at: http://0.0.0.0:5000 (3962)
+[2025-06-30 19:58:33 +0000] [3962] [INFO] Using worker: sync
+[2025-06-30 19:58:33 +0000] [3973] [INFO] Booting worker with pid: 3973
+Flask is already installed.
+INFO:root:Found local data folders, attempting migration to Vercel blob storage...
+INFO:root:Successfully migrated local data to Vercel blob storage
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Fposts.json HTTP/1.1" 200 282
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/posts.json HTTP/1.1" 200 391
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/posts.json?download=1 HTTP/1.1" 200 None
+INFO:root:Successfully retrieved JSON data: data/posts.json
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Flikes.json HTTP/1.1" 200 281
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/likes.json HTTP/1.1" 200 390
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/likes.json?download=1 HTTP/1.1" 200 251
+INFO:root:Successfully retrieved JSON data: data/likes.json
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Fcomments.json HTTP/1.1" 200 291
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/comments.json HTTP/1.1" 200 403
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/comments.json?download=1 HTTP/1.1" 200 None
+INFO:root:Successfully retrieved JSON data: data/comments.json
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=uploads%2Fdbb26760-38e0-416e-a06d-1e3acc1d5d2b.png HTTP/1.1" 200 28
+WARNING:root:File not found: uploads/dbb26760-38e0-416e-a06d-1e3acc1d5d2b.png
+ERROR:root:Error serving file uploads/dbb26760-38e0-416e-a06d-1e3acc1d5d2b.png: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=uploads%2F54daaad8-6705-4015-a650-9ba2b5072725.png HTTP/1.1" 200 372
+[2025-06-30 19:58:37 +0000] [3962] [INFO] Handling signal: winch
+[2025-06-30 19:58:37 +0000] [3962] [INFO] Handling signal: winch
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Fposts.json HTTP/1.1" 200 282
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/posts.json HTTP/1.1" 200 391
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/posts.json?download=1 HTTP/1.1" 200 None
+INFO:root:Successfully retrieved JSON data: data/posts.json
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Flikes.json HTTP/1.1" 200 281
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/likes.json HTTP/1.1" 200 390
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/likes.json?download=1 HTTP/1.1" 200 267
+INFO:root:Successfully retrieved JSON data: data/likes.json
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Fcomments.json HTTP/1.1" 200 291
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/comments.json HTTP/1.1" 200 403
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/comments.json?download=1 HTTP/1.1" 200 None
+INFO:root:Successfully retrieved JSON data: data/comments.json
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=uploads%2Fdbb26760-38e0-416e-a06d-1e3acc1d5d2b.png HTTP/1.1" 200 28
+WARNING:root:File not found: uploads/dbb26760-38e0-416e-a06d-1e3acc1d5d2b.png
+ERROR:root:Error serving file uploads/dbb26760-38e0-416e-a06d-1e3acc1d5d2b.png: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=uploads%2F54daaad8-6705-4015-a650-9ba2b5072725.png HTTP/1.1" 200 372
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Fcomments.json HTTP/1.1" 200 291
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/comments.json HTTP/1.1" 200 403
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/comments.json?download=1 HTTP/1.1" 200 None
+INFO:root:Successfully retrieved JSON data: data/comments.json
+Uploading:   0%|                    | 0.00/1.59k [00:00<?, ?B/s]DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "PUT /?pathname=data/comments.json HTTP/1.1" 200 309
+Uploading: 100%|████████████████████| 1.59k/1.59k [00:00<00:00, 5.75kB/s]
+INFO:root:Successfully stored JSON data: data/comments.json
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Fposts.json HTTP/1.1" 200 282
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/posts.json HTTP/1.1" 200 391
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/posts.json?download=1 HTTP/1.1" 200 None
+INFO:root:Successfully retrieved JSON data: data/posts.json
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Flikes.json HTTP/1.1" 200 281
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/likes.json HTTP/1.1" 200 390
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/likes.json?download=1 HTTP/1.1" 200 267
+INFO:root:Successfully retrieved JSON data: data/likes.json
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=data%2Fcomments.json HTTP/1.1" 200 291
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?url=https://cwb6csucovace5u4.public.blob.vercel-storage.com/data/comments.json HTTP/1.1" 200 403
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cwb6csucovace5u4.public.blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://cwb6csucovace5u4.public.blob.vercel-storage.com:443 "GET /data/comments.json?download=1 HTTP/1.1" 200 None
+INFO:root:Successfully retrieved JSON data: data/comments.json
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=uploads%2Fdbb26760-38e0-416e-a06d-1e3acc1d5d2b.png HTTP/1.1" 200 28
+WARNING:root:File not found: uploads/dbb26760-38e0-416e-a06d-1e3acc1d5d2b.png
+ERROR:root:Error serving file uploads/dbb26760-38e0-416e-a06d-1e3acc1d5d2b.png: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): blob.vercel-storage.com:443
+DEBUG:urllib3.connectionpool:https://blob.vercel-storage.com:443 "GET /?limit=1&prefix=uploads%2F54daaad8-6705-4015-a650-9ba2b5072725.png HTTP/1.1" 200 372
