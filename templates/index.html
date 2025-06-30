@@ -263,7 +263,7 @@
                     <div class="mt-2">
                         <small class="text-muted">
                             <span class="sigma-decoration"></span>
-                            Post ID: {{ post.id|string }}
+                            Post ID: {{ post.id[:8] }}... 
                             | Brainrot Level: {{ post.skibidi_level.title() }}
                         </small>
                     </div>
@@ -538,7 +538,7 @@ function loadComments(postId, page = 1) {
     // Show loading
     loadingDiv.style.display = 'block';
     
-    fetch(`/api/comments/${postId}?page=${page}`)
+    fetch(`/comments/${postId}?page=${page}`)
         .then(response => response.json())
         .then(data => {
             // Hide loading

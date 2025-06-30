@@ -1,5 +1,5 @@
-
 import os
+import json
 import uuid
 import logging
 import math
@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, jsonify
 
-# Configure logging.
+# Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
@@ -16,6 +16,7 @@ app.secret_key = os.environ.get("SESSION_SECRET", "skibidi_sigma_ohio_rizz_2024"
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'
+DATA_FOLDER = 'data'
 MAX_CONTENT_LENGTH = 25 * 1024 * 1024  # 25MB
 TEXT_MAX_LENGTH = 2048  # 2KB
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'mp4', 'webm', 'mp3', 'wav', 'doc', 'docx', 'zip'}
@@ -25,392 +26,199 @@ COMMENTS_PER_PAGE = 5  # Comments pagination
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 
-# Ensure upload directory exists
+# Ensure directories exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# Database setup with fallback to virtual memory
-DATABASE_URL = os.environ.get('DATABASE_URL')
-USE_DATABASE = False
-db_connection = None
-
-if DATABASE_URL:
-    try:
-        import psycopg2
-        from urllib.parse import urlparse
-        
-        # Parse database URL
-        url = urlparse(DATABASE_URL)
-        db_connection = psycopg2.connect(
-            database=url.path[1:],
-            user=url.username,
-            password=url.password,
-            host=url.hostname,
-            port=url.port
-        )
-        
-        # Initialize database tables
-        cursor = db_connection.cursor()
-        
-        # Create posts table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS posts (
-                id SERIAL PRIMARY KEY,
-                username VARCHAR(100) NOT NULL,
-                content TEXT NOT NULL,
-                filename VARCHAR(255),
-                file_data BYTEA,
-                file_mimetype VARCHAR(100),
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                skibidi_level VARCHAR(50) DEFAULT 'sigma'
-            )
-        ''')
-        
-        # Create comments table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS comments (
-                id SERIAL PRIMARY KEY,
-                post_id INTEGER REFERENCES posts(id),
-                username VARCHAR(100) NOT NULL,
-                content TEXT NOT NULL,
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Create likes table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS likes (
-                id SERIAL PRIMARY KEY,
-                post_id INTEGER REFERENCES posts(id),
-                username VARCHAR(100) NOT NULL,
-                UNIQUE(post_id, username)
-            )
-        ''')
-        
-        # Create hall tables
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS hall_of_fame (
-                id SERIAL PRIMARY KEY,
-                post_id INTEGER REFERENCES posts(id),
-                added_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS hall_of_shame (
-                id SERIAL PRIMARY KEY,
-                post_id INTEGER REFERENCES posts(id),
-                added_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        db_connection.commit()
-        cursor.close()
-        USE_DATABASE = True
-        logging.info("Database connected successfully!")
-        
-    except Exception as e:
-        logging.error(f"Database connection failed: {e}")
-        logging.info("Falling back to virtual memory storage")
-        USE_DATABASE = False
-        if db_connection:
-            db_connection.close()
-            db_connection = None
-else:
-    logging.info("No DATABASE_URL found, using virtual memory storage")
-
-# Virtual memory storage (fallback)
-VIRTUAL_STORAGE = {
-    'posts': [],
-    'comments': {},  # post_id -> list of comments
-    'likes': {},     # post_id -> list of usernames who liked
-    'hall_of_fame': [],
-    'hall_of_shame': []
-}
-
-# Counter for generating unique post IDs in virtual mode
-POST_ID_COUNTER = 1
+os.makedirs(DATA_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
     """Check if file extension is allowed"""
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Database functions
-def get_posts():
-    """Get all posts"""
-    if USE_DATABASE:
-        try:
-            cursor = db_connection.cursor()
-            cursor.execute("SELECT id, username, content, filename, file_data, file_mimetype, timestamp, skibidi_level FROM posts ORDER BY timestamp DESC")
-            rows = cursor.fetchall()
-            cursor.close()
-            
-            posts = []
-            for row in rows:
-                posts.append({
-                    'id': row[0],
-                    'username': row[1],
-                    'content': row[2],
-                    'filename': row[3],
-                    'file_data': row[4],
-                    'file_mimetype': row[5],
-                    'timestamp': row[6].isoformat() if row[6] else '',
-                    'skibidi_level': row[7] or 'sigma'
-                })
-            return posts
-        except Exception as e:
-            logging.error(f"Database error in get_posts: {e}")
-            return VIRTUAL_STORAGE['posts']
-    else:
-        # Sort by timestamp (newest first)
-        return sorted(VIRTUAL_STORAGE['posts'], key=lambda x: x.get('timestamp', ''), reverse=True)
+def get_posts_file():
+    """Get path to posts JSON file"""
+    return os.path.join(DATA_FOLDER, 'posts.json')
 
-def get_comments():
-    """Get all comments"""
-    if USE_DATABASE:
-        try:
-            cursor = db_connection.cursor()
-            cursor.execute("SELECT id, post_id, username, content, timestamp FROM comments ORDER BY timestamp DESC")
-            rows = cursor.fetchall()
-            cursor.close()
-            
-            comments = {}
-            for row in rows:
-                post_id = str(row[1])
-                if post_id not in comments:
-                    comments[post_id] = []
-                comments[post_id].append({
-                    'id': row[0],
-                    'username': row[2],
-                    'content': row[3],
-                    'timestamp': row[4].isoformat() if row[4] else ''
-                })
-            return comments
-        except Exception as e:
-            logging.error(f"Database error in get_comments: {e}")
-            return VIRTUAL_STORAGE['comments']
-    else:
-        return VIRTUAL_STORAGE['comments']
+def get_comments_file():
+    """Get path to comments JSON file"""
+    return os.path.join(DATA_FOLDER, 'comments.json')
 
-def get_likes():
-    """Get all likes"""
-    if USE_DATABASE:
-        try:
-            cursor = db_connection.cursor()
-            cursor.execute("SELECT post_id, username FROM likes")
-            rows = cursor.fetchall()
-            cursor.close()
-            
-            likes = {}
-            for row in rows:
-                post_id = str(row[0])
-                if post_id not in likes:
-                    likes[post_id] = []
-                likes[post_id].append(row[1])
-            return likes
-        except Exception as e:
-            logging.error(f"Database error in get_likes: {e}")
-            return VIRTUAL_STORAGE['likes']
-    else:
-        return VIRTUAL_STORAGE['likes']
+def get_likes_file():
+    """Get path to likes JSON file"""
+    return os.path.join(DATA_FOLDER, 'likes.json')
 
-def get_hall_of_fame():
-    """Get hall of fame posts"""
-    if USE_DATABASE:
-        try:
-            cursor = db_connection.cursor()
-            cursor.execute("""
-                SELECT p.id, p.username, p.content, p.filename, p.file_data, p.file_mimetype, p.timestamp, p.skibidi_level 
-                FROM posts p 
-                INNER JOIN hall_of_fame h ON p.id = h.post_id 
-                ORDER BY h.added_timestamp DESC
-            """)
-            rows = cursor.fetchall()
-            cursor.close()
-            
-            posts = []
-            for row in rows:
-                posts.append({
-                    'id': row[0],
-                    'username': row[1],
-                    'content': row[2],
-                    'filename': row[3],
-                    'file_data': row[4],
-                    'file_mimetype': row[5],
-                    'timestamp': row[6].isoformat() if row[6] else '',
-                    'skibidi_level': row[7] or 'sigma'
-                })
-            return posts
-        except Exception as e:
-            logging.error(f"Database error in get_hall_of_fame: {e}")
-            return VIRTUAL_STORAGE['hall_of_fame']
-    else:
-        return VIRTUAL_STORAGE['hall_of_fame']
+def get_hall_of_fame_file():
+    """Get path to hall of fame JSON file"""
+    return os.path.join(DATA_FOLDER, 'hall_of_fame.json')
 
-def get_hall_of_shame():
-    """Get hall of shame posts"""
-    if USE_DATABASE:
-        try:
-            cursor = db_connection.cursor()
-            cursor.execute("""
-                SELECT p.id, p.username, p.content, p.filename, p.file_data, p.file_mimetype, p.timestamp, p.skibidi_level 
-                FROM posts p 
-                INNER JOIN hall_of_shame h ON p.id = h.post_id 
-                ORDER BY h.added_timestamp DESC
-            """)
-            rows = cursor.fetchall()
-            cursor.close()
-            
-            posts = []
-            for row in rows:
-                posts.append({
-                    'id': row[0],
-                    'username': row[1],
-                    'content': row[2],
-                    'filename': row[3],
-                    'file_data': row[4],
-                    'file_mimetype': row[5],
-                    'timestamp': row[6].isoformat() if row[6] else '',
-                    'skibidi_level': row[7] or 'sigma'
-                })
-            return posts
-        except Exception as e:
-            logging.error(f"Database error in get_hall_of_shame: {e}")
-            return VIRTUAL_STORAGE['hall_of_shame']
-    else:
-        return VIRTUAL_STORAGE['hall_of_shame']
+def get_hall_of_shame_file():
+    """Get path to hall of shame JSON file"""
+    return os.path.join(DATA_FOLDER, 'hall_of_shame.json')
 
-def create_post(username, content, filename=None, file_data=None, file_mimetype=None):
+def load_posts():
+    """Load all posts from JSON file"""
+    posts_file = get_posts_file()
+    if os.path.exists(posts_file):
+        try:
+            with open(posts_file, 'r', encoding='utf-8') as f:
+                posts = json.load(f)
+                # Sort by timestamp descending (newest first)
+                return sorted(posts, key=lambda x: x.get('timestamp', ''), reverse=True)
+        except (json.JSONDecodeError, IOError) as e:
+            logging.error(f"Error loading posts: {e}")
+            return []
+    return []
+
+def load_comments():
+    """Load all comments from JSON file"""
+    comments_file = get_comments_file()
+    if os.path.exists(comments_file):
+        try:
+            with open(comments_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            logging.error(f"Error loading comments: {e}")
+            return {}
+    return {}
+
+def load_likes():
+    """Load all likes from JSON file"""
+    likes_file = get_likes_file()
+    if os.path.exists(likes_file):
+        try:
+            with open(likes_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            logging.error(f"Error loading likes: {e}")
+            return {}
+    return {}
+
+def load_hall_of_fame():
+    """Load hall of fame posts"""
+    hall_file = get_hall_of_fame_file()
+    if os.path.exists(hall_file):
+        try:
+            with open(hall_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            logging.error(f"Error loading hall of fame: {e}")
+            return []
+    return []
+
+def load_hall_of_shame():
+    """Load hall of shame posts"""
+    hall_file = get_hall_of_shame_file()
+    if os.path.exists(hall_file):
+        try:
+            with open(hall_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            logging.error(f"Error loading hall of shame: {e}")
+            return []
+    return []
+
+def save_posts(posts):
+    """Save posts to JSON file"""
+    posts_file = get_posts_file()
+    try:
+        with open(posts_file, 'w', encoding='utf-8') as f:
+            json.dump(posts, f, ensure_ascii=False, indent=2)
+        return True
+    except IOError as e:
+        logging.error(f"Error saving posts: {e}")
+        return False
+
+def save_comments(comments):
+    """Save comments to JSON file"""
+    comments_file = get_comments_file()
+    try:
+        with open(comments_file, 'w', encoding='utf-8') as f:
+            json.dump(comments, f, ensure_ascii=False, indent=2)
+        return True
+    except IOError as e:
+        logging.error(f"Error saving comments: {e}")
+        return False
+
+def save_likes(likes):
+    """Save likes to JSON file"""
+    likes_file = get_likes_file()
+    try:
+        with open(likes_file, 'w', encoding='utf-8') as f:
+            json.dump(likes, f, ensure_ascii=False, indent=2)
+        return True
+    except IOError as e:
+        logging.error(f"Error saving likes: {e}")
+        return False
+
+def create_post(username, content, filename=None):
     """Create a new post"""
-    if USE_DATABASE:
-        try:
-            cursor = db_connection.cursor()
-            cursor.execute(
-                "INSERT INTO posts (username, content, filename, file_data, file_mimetype, skibidi_level) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
-                (username, content, filename, file_data, file_mimetype, 'sigma')
-            )
-            post_id = cursor.fetchone()[0]
-            db_connection.commit()
-            cursor.close()
-            return post_id
-        except Exception as e:
-            logging.error(f"Database error in create_post: {e}")
-            # Fallback to virtual storage
-            pass
-    
-    # Virtual storage
-    global POST_ID_COUNTER
-    posts = VIRTUAL_STORAGE['posts']
     post = {
-        'id': POST_ID_COUNTER,
+        'id': str(uuid.uuid4()),
         'username': username,
         'content': content,
         'filename': filename,
-        'file_data': file_data,
-        'file_mimetype': file_mimetype,
         'timestamp': datetime.now().isoformat(),
-        'skibidi_level': 'sigma'
+        'skibidi_level': 'sigma',  # Default brainrot level
+        'likes': 0,
+        'comments': []
     }
+    
+    posts = load_posts()
     posts.append(post)
-    POST_ID_COUNTER += 1
-    return post['id']
+    
+    if save_posts(posts):
+        return post
+    return None
 
 def add_comment(post_id, username, comment_content):
     """Add a comment to a post"""
-    if USE_DATABASE:
-        try:
-            cursor = db_connection.cursor()
-            cursor.execute(
-                "INSERT INTO comments (post_id, username, content) VALUES (%s, %s, %s) RETURNING id",
-                (post_id, username, comment_content)
-            )
-            comment_id = cursor.fetchone()[0]
-            db_connection.commit()
-            cursor.close()
-            
-            return {
-                'id': comment_id,
-                'username': username,
-                'content': comment_content,
-                'timestamp': datetime.now().isoformat()
-            }
-        except Exception as e:
-            logging.error(f"Database error in add_comment: {e}")
-            # Fallback to virtual storage
-            pass
-    
-    # Virtual storage
-    comments = VIRTUAL_STORAGE['comments']
-    if str(post_id) not in comments:
-        comments[str(post_id)] = []
-    
     comment = {
-        'id': len(comments[str(post_id)]) + 1,
+        'id': str(uuid.uuid4()),
         'username': username,
         'content': comment_content,
         'timestamp': datetime.now().isoformat()
     }
     
-    comments[str(post_id)].append(comment)
-    return comment
+    comments = load_comments()
+    if post_id not in comments:
+        comments[post_id] = []
+    comments[post_id].append(comment)
+    
+    if save_comments(comments):
+        return comment
+    return None
 
 def toggle_like(post_id, username):
     """Toggle like for a post by username"""
-    if USE_DATABASE:
-        try:
-            cursor = db_connection.cursor()
-            
-            # Check if like exists
-            cursor.execute("SELECT id FROM likes WHERE post_id = %s AND username = %s", (post_id, username))
-            existing = cursor.fetchone()
-            
-            if existing:
-                # Remove like
-                cursor.execute("DELETE FROM likes WHERE post_id = %s AND username = %s", (post_id, username))
-                liked = False
-            else:
-                # Add like
-                cursor.execute("INSERT INTO likes (post_id, username) VALUES (%s, %s)", (post_id, username))
-                liked = True
-            
-            # Get total likes count
-            cursor.execute("SELECT COUNT(*) FROM likes WHERE post_id = %s", (post_id,))
-            total_likes = cursor.fetchone()[0]
-            
-            db_connection.commit()
-            cursor.close()
-            return liked, total_likes
-        except Exception as e:
-            logging.error(f"Database error in toggle_like: {e}")
-            # Fallback to virtual storage
-            pass
+    likes = load_likes()
+    if post_id not in likes:
+        likes[post_id] = []
     
-    # Virtual storage
-    likes = VIRTUAL_STORAGE['likes']
-    post_id_str = str(post_id)
-    
-    if post_id_str not in likes:
-        likes[post_id_str] = []
-    
-    if username in likes[post_id_str]:
-        likes[post_id_str].remove(username)
-        liked = False
+    if username in likes[post_id]:
+        likes[post_id].remove(username)
+        action = 'unliked'
     else:
-        likes[post_id_str].append(username)
-        liked = True
+        likes[post_id].append(username)
+        action = 'liked'
     
-    return liked, len(likes[post_id_str])
+    save_likes(likes)
+    return action, len(likes[post_id])
 
 def search_posts(query):
     """Search posts by content and username"""
-    posts = get_posts()
+    posts = load_posts()
     if not query:
         return posts
     
     query_lower = query.lower()
-    return [post for post in posts 
-            if query_lower in post['content'].lower() or 
-               query_lower in post['username'].lower()]
+    filtered_posts = []
+    
+    for post in posts:
+        if (query_lower in post.get('content', '').lower() or 
+            query_lower in post.get('username', '').lower()):
+            filtered_posts.append(post)
+    
+    return filtered_posts
 
 def paginate_posts(posts, page, per_page):
     """Paginate posts"""
@@ -454,18 +262,11 @@ def paginate_comments(comments, page, per_page):
         'next_num': page + 1 if page < total_pages else None
     }
 
-# Compatibility functions
-load_posts = get_posts
-load_comments = get_comments
-load_likes = get_likes
-load_hall_of_fame = get_hall_of_fame
-load_hall_of_shame = get_hall_of_shame
-
 @app.errorhandler(RequestEntityTooLarge)
 def handle_file_too_large(e):
     """Handle file too large error"""
-    flash('File too large! Maximum size is 25MB.', 'danger')
-    return redirect(url_for('create_post_route'))
+    flash('Yo fam, that file is way too chonky! Keep it under 25MB for maximum Ohio rizz! 🚽', 'error')
+    return redirect(url_for('create_post'))
 
 @app.route('/')
 def index():
@@ -473,37 +274,33 @@ def index():
     page = request.args.get('page', 1, type=int)
     search_query = request.args.get('search', '', type=str)
     
+    # Get posts (filtered by search if query provided)
     if search_query:
         posts = search_posts(search_query)
     else:
-        posts = get_posts()
+        posts = load_posts()
+    
+    # Add likes and comments data to posts
+    likes = load_likes()
+    comments = load_comments()
+    
+    for post in posts:
+        post_id = post['id']
+        post['like_count'] = len(likes.get(post_id, []))
+        post_comments = comments.get(post_id, [])
+        post['comment_count'] = len(post_comments)
+        
+        # Sort comments by timestamp (newest first)
+        post_comments_sorted = sorted(post_comments, key=lambda x: x.get('timestamp', ''), reverse=True)
+        post['comments_data'] = post_comments_sorted
     
     # Paginate posts
     pagination = paginate_posts(posts, page, POSTS_PER_PAGE)
     
-    # Get comments and likes for each post
-    comments_data = get_comments()
-    likes_data = get_likes()
-    
-    for post in pagination['posts']:
-        post_id = str(post['id'])
-        post['comments_count'] = len(comments_data.get(post_id, []))
-        post['likes_count'] = len(likes_data.get(post_id, []))
-        post['like_count'] = len(likes_data.get(post_id, []))
-        post['comment_count'] = len(comments_data.get(post_id, []))
-        
-        # Add comments data for the template
-        post_comments = comments_data.get(post_id, [])
-        post_comments_sorted = sorted(post_comments, key=lambda x: x.get('timestamp', ''), reverse=True)
-        post['comments_data'] = post_comments_sorted
-    
-    storage_type = "Database" if USE_DATABASE else "Virtual Memory"
-    
     return render_template('index.html', 
                          posts=pagination['posts'],
                          pagination=pagination,
-                         search_query=search_query,
-                         storage_type=storage_type)
+                         search_query=search_query)
 
 @app.route('/create', methods=['GET', 'POST'])
 def create_post_route():
@@ -512,152 +309,144 @@ def create_post_route():
         username = request.form.get('username', '').strip()
         content = request.form.get('content', '').strip()
         
-        if not username or not content:
-            flash('Username and content are required!', 'danger')
+        # Validate inputs
+        if not username:
+            flash('Bruh, you gotta drop your Skibidi username! No cap! 🚽', 'error')
             return render_template('create_post.html')
         
-        if len(content) > TEXT_MAX_LENGTH:
-            flash(f'Content too long! Maximum {TEXT_MAX_LENGTH} characters allowed.', 'danger')
+        if not content:
+            flash('Yo, you forgot the Skibidi content! Drop some brainrot wisdom! 📸', 'error')
             return render_template('create_post.html')
         
-        filename = None
-        file_data = None
-        file_mimetype = None
+        if len(content.encode('utf-8')) > TEXT_MAX_LENGTH:
+            flash(f'That post is too long, fam! Keep it under {TEXT_MAX_LENGTH} bytes for maximum sigma energy! ⚡', 'error')
+            return render_template('create_post.html')
         
+        # Handle file upload
+        uploaded_filename = None
         if 'file' in request.files:
             file = request.files['file']
-            if file and file.filename and allowed_file(file.filename):
-                filename = str(uuid.uuid4()) + '.' + file.filename.rsplit('.', 1)[1].lower()
-                
-                if USE_DATABASE:
-                    # Store file in database
-                    file_data = file.read()
-                    file_mimetype = file.mimetype
+            if file.filename and file.filename != '':
+                if file and file.filename and allowed_file(file.filename):
+                    # Generate unique filename
+                    secure_name = secure_filename(file.filename)
+                    file_extension = secure_name.rsplit('.', 1)[1].lower()
+                    unique_filename = f"{uuid.uuid4()}.{file_extension}"
+                    file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                    
+                    try:
+                        file.save(file_path)
+                        uploaded_filename = unique_filename
+                        logging.info(f"File saved: {file_path}")
+                    except Exception as e:
+                        logging.error(f"Error saving file: {e}")
+                        flash('Failed to upload your Skibidi content! Try again, sigma! 💀', 'error')
+                        return render_template('create_post.html')
                 else:
-                    # Store file in filesystem (virtual memory fallback)
-                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    flash('That file type is sus! Only upload valid Skibidi formats! 📁', 'error')
+                    return render_template('create_post.html')
         
-        post_id = create_post(username, content, filename, file_data, file_mimetype)
-        flash(f'Skibidi post created! ID: {post_id}', 'success')
-        return redirect(url_for('index'))
+        # Create the post
+        post = create_post(username, content, uploaded_filename)
+        if post:
+            flash('Skibidi post created successfully! You\'re absolutely sigma! 🚽✨', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Failed to create your Skibidi post! The toilet gods are angry! 😱', 'error')
     
     return render_template('create_post.html')
 
-@app.route('/like/<int:post_id>', methods=['POST'])
+@app.route('/like/<post_id>', methods=['POST'])
 def like_post(post_id):
     """Toggle like for a post"""
     username = request.form.get('username', '').strip()
     if not username:
-        flash('Username required to like!', 'danger')
+        flash('You need to provide a username to like posts! Drop your Skibidi name! 🚽', 'error')
         return redirect(url_for('index'))
     
-    try:
-        liked, total_likes = toggle_like(post_id, username)
-        action = 'liked' if liked else 'unliked'
-        flash(f'Post {action}! Total likes: {total_likes}', 'success')
-    except Exception as e:
-        logging.error(f"Error toggling like: {e}")
-        flash('Error processing like!', 'danger')
+    action, like_count = toggle_like(post_id, username)
+    
+    if action == 'liked':
+        flash(f'Sigma energy added! That post is now more rizz! ⚡', 'success')
+    else:
+        flash(f'Like removed! Still sigma though! 💀', 'success')
     
     return redirect(url_for('index'))
 
-@app.route('/comment/<int:post_id>', methods=['POST'])
+@app.route('/comment/<post_id>', methods=['POST'])
 def add_comment_route(post_id):
     """Add comment to a post"""
     username = request.form.get('username', '').strip()
     comment_content = request.form.get('comment', '').strip()
     
-    if not username or not comment_content:
-        flash('Username and comment are required!', 'danger')
+    if not username:
+        flash('Bruh, drop your username to comment! No anonymous Ohio energy! 🚽', 'error')
         return redirect(url_for('index'))
     
-    if len(comment_content) > 500:
-        flash('Comment too long! Maximum 500 characters.', 'danger')
+    if not comment_content:
+        flash('You gotta write something sigma for your comment! 📸', 'error')
         return redirect(url_for('index'))
     
-    try:
-        add_comment(post_id, username, comment_content)
-        flash('Comment added!', 'success')
-    except Exception as e:
-        logging.error(f"Error adding comment: {e}")
-        flash('Error adding comment!', 'danger')
+    if len(comment_content.encode('utf-8')) > 500:  # 500 bytes for comments
+        flash('That comment is too long! Keep it under 500 bytes for maximum brainrot! 💀', 'error')
+        return redirect(url_for('index'))
+    
+    comment = add_comment(post_id, username, comment_content)
+    if comment:
+        flash('Comment added! Your brainrot wisdom has been shared! ⚡', 'success')
+    else:
+        flash('Failed to add comment! The Skibidi gods are upset! 😱', 'error')
     
     return redirect(url_for('index'))
 
 @app.route('/hall-of-fame')
 def hall_of_fame():
     """Hall of Fame page"""
-    hall_posts = get_hall_of_fame()
-    return render_template('hall_of_fame.html', posts=hall_posts)
+    fame_posts = load_hall_of_fame()
+    return render_template('hall_of_fame.html', posts=fame_posts, hall_type='fame')
 
 @app.route('/hall-of-shame')
 def hall_of_shame():
     """Hall of Shame page"""
-    hall_posts = get_hall_of_shame()
-    return render_template('hall_of_shame.html', posts=hall_posts)
+    shame_posts = load_hall_of_shame()
+    return render_template('hall_of_shame.html', posts=shame_posts, hall_type='shame')
 
-@app.route('/api/comments/<int:post_id>')
-def get_comments_api(post_id):
+@app.route('/comments/<post_id>')
+def get_comments(post_id):
     """Get paginated comments for a post"""
     page = request.args.get('page', 1, type=int)
-    comments_data = get_comments()
-    post_comments = comments_data.get(str(post_id), [])
+    comments = load_comments()
+    post_comments = comments.get(post_id, [])
     
     # Sort comments by timestamp (newest first)
-    post_comments = sorted(post_comments, key=lambda x: x.get('timestamp', ''), reverse=True)
+    post_comments_sorted = sorted(post_comments, key=lambda x: x.get('timestamp', ''), reverse=True)
     
-    pagination = paginate_comments(post_comments, page, COMMENTS_PER_PAGE)
+    # Paginate comments
+    pagination = paginate_comments(post_comments_sorted, page, COMMENTS_PER_PAGE)
     
     return jsonify({
         'comments': pagination['comments'],
-        'has_next': pagination['has_next'],
-        'has_prev': pagination['has_prev'],
-        'next_num': pagination['next_num'],
-        'prev_num': pagination['prev_num'],
-        'page': pagination['page'],
-        'total_pages': pagination['total_pages'],
-        'pagination': pagination
+        'pagination': {
+            'page': pagination['page'],
+            'total_pages': pagination['total_pages'],
+            'has_prev': pagination['has_prev'],
+            'has_next': pagination['has_next'],
+            'prev_num': pagination['prev_num'],
+            'next_num': pagination['next_num'],
+            'total': pagination['total']
+        }
     })
-
-@app.route('/comments/<int:post_id>')
-def get_comments_route(post_id):
-    """Alternative route for comments (for JavaScript fetch)"""
-    return get_comments_api(post_id)
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     """Serve uploaded files"""
-    if USE_DATABASE:
-        # Serve file from database
-        try:
-            cursor = db_connection.cursor()
-            cursor.execute("SELECT file_data, file_mimetype FROM posts WHERE filename = %s", (filename,))
-            result = cursor.fetchone()
-            cursor.close()
-            
-            if result and result[0]:
-                from flask import Response
-                return Response(
-                    result[0],
-                    mimetype=result[1] or 'application/octet-stream',
-                    headers={'Content-Disposition': f'inline; filename={filename}'}
-                )
-            else:
-                from flask import abort
-                abort(404)
-        except Exception as e:
-            logging.error(f"Error serving file from database: {e}")
-            from flask import abort
-            abort(500)
-    else:
-        # Serve file from filesystem (virtual memory fallback)
-        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/api/posts')
 def api_posts():
     """API endpoint for posts (if needed for AJAX)"""
-    posts = get_posts()
+    posts = load_posts()
     return jsonify(posts)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
