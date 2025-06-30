@@ -1,4 +1,3 @@
-from app import app
 import subprocess
 import sys
 import importlib.util
@@ -12,6 +11,7 @@ def ensure_flask_installed():
         print("Flask is already installed.")
 
 # Ensure Flask is ready before proceeding
+from app import app
 ensure_flask_installed()
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
