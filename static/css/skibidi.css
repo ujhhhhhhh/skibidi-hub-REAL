@@ -514,3 +514,76 @@ footer {
 .like-form, .comment-form {
     color: #1f2937;
 }
+
+/* Collapsible comments styles */
+.comments-section {
+    transition: all 0.3s ease;
+    border: 2px solid var(--skibidi-blue);
+    border-radius: 10px;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.comments-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.comment-pagination-controls .btn-group {
+    border-radius: 6px;
+}
+
+.comment-pagination-controls .btn {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Smooth animations for comment loading */
+.comment {
+    animation: slideInComment 0.3s ease-out;
+}
+
+@keyframes slideInComment {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Show/Hide comments button styling */
+.btn-outline-info {
+    border-color: var(--skibidi-blue);
+    color: var(--skibidi-blue);
+}
+
+.btn-outline-info:hover {
+    background-color: var(--skibidi-blue);
+    border-color: var(--skibidi-blue);
+    color: white;
+}
+
+/* Comments loading state */
+#comments-loading-* {
+    padding: 2rem;
+}
+
+/* Comment pagination responsive */
+@media (max-width: 768px) {
+    .comment-pagination-controls {
+        order: -1;
+        margin-bottom: 0.5rem;
+    }
+    
+    .d-flex.justify-content-between.align-items-center {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+    
+    .comments-container {
+        max-height: 300px;
+    }
+}

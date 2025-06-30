@@ -110,6 +110,12 @@ This is a Flask-based community hub application themed around internet memes and
   - Enhanced UI with interactive buttons and forms
   - Search result highlighting
   - Mobile-responsive design improvements
+- June 30, 2025. Enhanced comment system:
+  - Comments are now collapsible by default (hidden until clicked)
+  - Added pagination for comments (5 comments per page)
+  - AJAX loading for comments with smooth animations
+  - Individual comment pagination controls per post
+  - Improved mobile responsiveness for comment interactions
 
 ## User Preferences
 

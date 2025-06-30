@@ -21,6 +21,7 @@ MAX_CONTENT_LENGTH = 25 * 1024 * 1024  # 25MB
 TEXT_MAX_LENGTH = 2048  # 2KB
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'mp4', 'webm', 'mp3', 'wav', 'doc', 'docx', 'zip'}
 POSTS_PER_PAGE = 10  # Pagination
+COMMENTS_PER_PAGE = 5  # Comments pagination
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
@@ -240,6 +241,27 @@ def paginate_posts(posts, page, per_page):
         'next_num': page + 1 if page < total_pages else None
     }
 
+def paginate_comments(comments, page, per_page):
+    """Paginate comments for a post"""
+    total = len(comments)
+    start = (page - 1) * per_page
+    end = start + per_page
+    
+    paginated_comments = comments[start:end]
+    total_pages = math.ceil(total / per_page) if total > 0 else 1
+    
+    return {
+        'comments': paginated_comments,
+        'total': total,
+        'page': page,
+        'per_page': per_page,
+        'total_pages': total_pages,
+        'has_prev': page > 1,
+        'has_next': page < total_pages,
+        'prev_num': page - 1 if page > 1 else None,
+        'next_num': page + 1 if page < total_pages else None
+    }
+
 @app.errorhandler(RequestEntityTooLarge)
 def handle_file_too_large(e):
     """Handle file too large error"""
@@ -265,8 +287,12 @@ def index():
     for post in posts:
         post_id = post['id']
         post['like_count'] = len(likes.get(post_id, []))
-        post['comment_count'] = len(comments.get(post_id, []))
-        post['comments_data'] = comments.get(post_id, [])
+        post_comments = comments.get(post_id, [])
+        post['comment_count'] = len(post_comments)
+        
+        # Sort comments by timestamp (newest first)
+        post_comments_sorted = sorted(post_comments, key=lambda x: x.get('timestamp', ''), reverse=True)
+        post['comments_data'] = post_comments_sorted
     
     # Paginate posts
     pagination = paginate_posts(posts, page, POSTS_PER_PAGE)
@@ -384,6 +410,32 @@ def hall_of_shame():
     """Hall of Shame page"""
     shame_posts = load_hall_of_shame()
     return render_template('hall_of_shame.html', posts=shame_posts, hall_type='shame')
+
+@app.route('/comments/<post_id>')
+def get_comments(post_id):
+    """Get paginated comments for a post"""
+    page = request.args.get('page', 1, type=int)
+    comments = load_comments()
+    post_comments = comments.get(post_id, [])
+    
+    # Sort comments by timestamp (newest first)
+    post_comments_sorted = sorted(post_comments, key=lambda x: x.get('timestamp', ''), reverse=True)
+    
+    # Paginate comments
+    pagination = paginate_comments(post_comments_sorted, page, COMMENTS_PER_PAGE)
+    
+    return jsonify({
+        'comments': pagination['comments'],
+        'pagination': {
+            'page': pagination['page'],
+            'total_pages': pagination['total_pages'],
+            'has_prev': pagination['has_prev'],
+            'has_next': pagination['has_next'],
+            'prev_num': pagination['prev_num'],
+            'next_num': pagination['next_num'],
+            'total': pagination['total']
+        }
+    })
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
