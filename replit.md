@@ -152,6 +152,12 @@ This is a Flask-based community hub application themed around internet memes and
   - Added comprehensive error handling and loading states
   - Successfully reset all data (posts, comments, likes) for fresh user testing
   - Application now fully functional with all social features working
+- June 30, 2025. File storage system optimization:
+  - Fixed file upload/serving to use Vercel Blob Storage exclusively
+  - Removed local file fallbacks to ensure cloud-only file operations
+  - Updated file paths to eliminate double "uploads/" prefix issues
+  - Files now upload directly to blob storage and serve via redirect to blob URLs
+  - Verified end-to-end file upload and serving functionality
 
 ## User Preferences
 

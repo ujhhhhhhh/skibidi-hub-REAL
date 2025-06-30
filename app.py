@@ -77,7 +77,12 @@ def load_posts():
 def load_comments():
     """Load all comments from Vercel blob storage"""
     try:
-        return storage_service.get_json_data('comments', {})
+        data = storage_service.get_json_data('comments', {})
+        # Ensure data is a dictionary, not a list
+        if isinstance(data, list):
+            logging.warning("Comments data is a list, converting to empty dict")
+            return {}
+        return data
     except Exception as e:
         logging.error(f"Error loading comments: {e}")
         return {}
@@ -337,7 +342,7 @@ def create_post_route():
                     # Generate unique filename
                     secure_name = secure_filename(file.filename)
                     file_extension = secure_name.rsplit('.', 1)[1].lower()
-                    unique_filename = f"uploads/{uuid.uuid4()}.{file_extension}"
+                    unique_filename = f"{uuid.uuid4()}.{file_extension}"
 
                     try:
                         # Read file content
@@ -489,14 +494,14 @@ def uploaded_file(filename):
         # Get the blob URL for the file
         blob_url = storage_service.get_file_url(filename)
         if blob_url:
+            # Redirect to the blob URL for direct serving
             return redirect(blob_url)
         else:
-            # Fallback to local file if blob storage fails
-            return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+            logging.warning(f"File not found in blob storage: {filename}")
+            return "File not found", 404
     except Exception as e:
         logging.error(f"Error serving file {filename}: {e}")
-        # Fallback to local file if blob storage fails
-        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+        return "Error serving file", 500
 
 
 @app.route('/api/posts')
