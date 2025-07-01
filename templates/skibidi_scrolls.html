@@ -248,6 +248,101 @@ endblock %} {% block content %}
         z-index: 50;
     }
 
+    /* Fullscreen mode styles */
+    .fullscreen-mode {
+        overflow: hidden;
+    }
+
+    .fullscreen-mode .nav-overlay,
+    .fullscreen-mode .scroll-counter,
+    .fullscreen-mode footer {
+        display: none !important;
+    }
+
+    .fullscreen-mode .scrolls-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 9999;
+        background: #000;
+    }
+
+    .fullscreen-mode .scroll-item {
+        height: 100vh;
+    }
+
+    .fullscreen-mode .scroll-video {
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+    }
+
+    /* Fullscreen hint */
+    .fullscreen-hint {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        z-index: 10000;
+        font-size: 1.2rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        display: none;
+    }
+
+    /* Exit fullscreen overlay */
+    .exit-fullscreen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .exit-fullscreen-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .exit-options {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        text-align: center;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .exit-options h3 {
+        color: #1f2937;
+        margin-bottom: 1rem;
+    }
+
+    .exit-options p {
+        color: #6b7280;
+        margin-bottom: 2rem;
+    }
+
+    .exit-options .btn {
+        margin: 0.5rem;
+        min-width: 150px;
+    }
+
     @media (max-width: 768px) {
         .scroll-overlay {
             padding: 1rem 0.5rem 0.5rem;
@@ -278,6 +373,15 @@ endblock %} {% block content %}
             height: 45px;
             font-size: 1.3rem;
         }
+
+        .exit-options {
+            padding: 1.5rem;
+        }
+
+        .exit-options .btn {
+            min-width: 120px;
+            font-size: 0.9rem;
+        }
     }
 </style>
 
@@ -303,6 +407,32 @@ endblock %} {% block content %}
 
 <div class="scroll-counter">
     <span id="current-scroll">1</span> / {{ videos|length }}
+</div>
+
+<!-- Fullscreen hint -->
+<div class="fullscreen-hint" id="fullscreenHint">
+    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎬</div>
+    <div>Use mouse wheel to scroll between videos</div>
+    <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">Press ESC to exit fullscreen</div>
+</div>
+
+<!-- Exit fullscreen overlay -->
+<div class="exit-fullscreen-overlay" id="exitFullscreenOverlay">
+    <div class="exit-options">
+        <h3>🚽 Skibidi Scrolls Paused</h3>
+        <p>Choose your next sigma move:</p>
+        <div class="d-flex flex-column gap-2">
+            <button class="btn btn-primary btn-lg" onclick="continueWatching()">
+                <i class="fas fa-play"></i> Continue Watching
+            </button>
+            <a href="{{ url_for('upload_scroll') }}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-plus"></i> Upload Your Scroll
+            </a>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-lg">
+                <i class="fas fa-home"></i> Go to Main Feed
+            </a>
+        </div>
+    </div>
 </div>
 
 {% if videos %}
@@ -511,6 +641,8 @@ endblock %} {% block content %}
 <script>
     let currentVideoIndex = 0;
     let currentLikeVideoId = null;
+    let isFullscreen = false;
+    let lastScrollPosition = 0;
     const totalVideos = {{ videos|length }};
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -523,20 +655,70 @@ endblock %} {% block content %}
         // Set up video event listeners
         setupVideoEventListeners();
 
-        // Play first video
-        playCurrentVideo();
+        // Set up fullscreen event listeners
+        setupFullscreenEventListeners();
+
+        // Auto-enter fullscreen on page load
+        setTimeout(() => {
+            enterFullscreen();
+        }, 500);
 
         // Handle keyboard navigation
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'ArrowDown' || e.key === ' ') {
-                e.preventDefault();
-                scrollToNext();
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                scrollToPrev();
+            if (isFullscreen) {
+                if (e.key === 'ArrowDown' || e.key === ' ') {
+                    e.preventDefault();
+                    scrollToNext();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    scrollToPrev();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    exitFullscreen();
+                }
             }
         });
+
+        // Handle mouse wheel scrolling in fullscreen
+        container.addEventListener('wheel', function(e) {
+            if (isFullscreen) {
+                e.preventDefault();
+                if (e.deltaY > 0) {
+                    scrollToNext();
+                } else if (e.deltaY < 0) {
+                    scrollToPrev();
+                }
+            }
+        }, { passive: false });
     });
+
+    function setupFullscreenEventListeners() {
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', function() {
+            if (!document.fullscreenElement && isFullscreen) {
+                // User exited fullscreen manually
+                handleFullscreenExit();
+            }
+        });
+
+        document.addEventListener('webkitfullscreenchange', function() {
+            if (!document.webkitFullscreenElement && isFullscreen) {
+                handleFullscreenExit();
+            }
+        });
+
+        document.addEventListener('mozfullscreenchange', function() {
+            if (!document.mozFullScreenElement && isFullscreen) {
+                handleFullscreenExit();
+            }
+        });
+
+        document.addEventListener('MSFullscreenChange', function() {
+            if (!document.msFullscreenElement && isFullscreen) {
+                handleFullscreenExit();
+            }
+        });
+    }
 
     function setupVideoEventListeners() {
         // Add event listeners to all videos
@@ -988,11 +1170,17 @@ endblock %} {% block content %}
 
     // Fullscreen functions
     function enterFullscreen() {
-        const body = document.body;
         const container = document.getElementById('scrollsContainer');
+        lastScrollPosition = container.scrollTop;
 
-        if (container.requestFullscreen) {
-            container.requestFullscreen().then(() => {
+        // Try to request fullscreen
+        const requestFullscreen = container.requestFullscreen || 
+                                container.webkitRequestFullscreen || 
+                                container.mozRequestFullScreen || 
+                                container.msRequestFullscreen;
+
+        if (requestFullscreen) {
+            requestFullscreen.call(container).then(() => {
                 activateFullscreenMode();
             }).catch(err => {
                 console.error('Error entering fullscreen:', err);
@@ -1009,6 +1197,12 @@ endblock %} {% block content %}
         isFullscreen = true;
         document.body.classList.add('fullscreen-mode');
 
+        // Hide scrollbar and adjust container
+        const container = document.getElementById('scrollsContainer');
+        container.style.scrollbarWidth = 'none';
+        container.style.msOverflowStyle = 'none';
+        container.style.scrollSnapType = 'y mandatory';
+
         // Show hint
         const hint = document.getElementById('fullscreenHint');
         hint.style.display = 'block';
@@ -1021,12 +1215,33 @@ endblock %} {% block content %}
     }
 
     function exitFullscreen() {
-        if (document.fullscreenElement) {
-            document.exitFullscreen();
-        }
+        // Exit browser fullscreen if active
+        const exitFullscreen = document.exitFullscreen || 
+                              document.webkitExitFullscreen || 
+                              document.mozCancelFullScreen || 
+                              document.msExitFullscreen;
 
+        if (exitFullscreen && (document.fullscreenElement || document.webkitFullscreenElement || 
+                              document.mozFullScreenElement || document.msFullscreenElement)) {
+            exitFullscreen.call(document);
+        } else {
+            // If not in browser fullscreen, handle manually
+            handleFullscreenExit();
+        }
+    }
+
+    function handleFullscreenExit() {
         isFullscreen = false;
         document.body.classList.remove('fullscreen-mode');
+
+        // Hide the scrolls container
+        const container = document.getElementById('scrollsContainer');
+        container.style.display = 'none';
+
+        // Reset container styles
+        container.style.scrollbarWidth = '';
+        container.style.msOverflowStyle = '';
+        container.style.scrollSnapType = '';
 
         // Show exit options overlay
         const overlay = document.getElementById('exitFullscreenOverlay');
@@ -1040,16 +1255,32 @@ endblock %} {% block content %}
         const overlay = document.getElementById('exitFullscreenOverlay');
         overlay.classList.remove('show');
 
-        // Re-enter fullscreen
+        // Show the scrolls container again
+        const container = document.getElementById('scrollsContainer');
+        container.style.display = 'block';
+
+        // Restore scroll position
         setTimeout(() => {
-            enterFullscreen();
-        }, 300);
+            container.scrollTop = currentVideoIndex * window.innerHeight;
+            // Re-enter fullscreen
+            setTimeout(() => {
+                enterFullscreen();
+            }, 100);
+        }, 100);
     }
 
     // Close exit overlay when clicking outside options
-    document.getElementById('exitFullscreenOverlay').addEventListener('click', function(e) {
-        if (e.target === this) {
-            this.classList.remove('show');
+    document.addEventListener('DOMContentLoaded', function() {
+        const overlay = document.getElementById('exitFullscreenOverlay');
+        if (overlay) {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                    // Show container again if user clicks outside
+                    const container = document.getElementById('scrollsContainer');
+                    container.style.display = 'block';
+                }
+            });
         }
     });
 </script>
