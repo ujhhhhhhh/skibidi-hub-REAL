@@ -23,18 +23,162 @@
 }
 
 .scroll-video {
-    max-height: 100vh;
-    max-width: 100vw;
-    object-fit: contain;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
     cursor: pointer;
 }
 
 .scroll-video::-webkit-media-controls {
-    z-index: 15;
+    display: none !important;
 }
 
 .scroll-video::-webkit-media-controls-panel {
-    background-color: rgba(0, 0, 0, 0.7);
+    display: none !important;
+}
+
+.scroll-video::-webkit-media-controls-play-button {
+    display: none !important;
+}
+
+.scroll-video::-webkit-media-controls-start-playback-button {
+    display: none !important;
+}
+
+.custom-video-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    padding: 1rem;
+    z-index: 20;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.scroll-item:hover .custom-video-controls,
+.scroll-item.controls-visible .custom-video-controls {
+    opacity: 1;
+}
+
+.video-progress-container {
+    position: relative;
+    height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    margin-bottom: 1rem;
+    cursor: pointer;
+}
+
+.video-progress-bar {
+    height: 100%;
+    background: #ff0000;
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.1s ease;
+}
+
+.video-progress-container:hover {
+    height: 6px;
+}
+
+.video-controls-bottom {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: space-between;
+}
+
+.video-controls-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.video-controls-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.control-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.control-btn:hover {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.1);
+}
+
+.play-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+}
+
+.volume-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.volume-slider {
+    width: 80px;
+    height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.volume-container:hover .volume-slider {
+    opacity: 1;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+}
+
+.time-display {
+    font-size: 0.9rem;
+    color: white;
+    min-width: 80px;
+    text-align: center;
+}
+
+.speed-selector {
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.speed-selector:focus {
+    outline: none;
+    border-color: white;
 }
 
 .unmute-prompt {
@@ -116,6 +260,27 @@
         right: 0.5rem;
         bottom: 4rem;
     }
+    
+    .volume-slider {
+        width: 60px;
+    }
+    
+    .time-display {
+        font-size: 0.8rem;
+        min-width: 70px;
+    }
+    
+    .control-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
+    
+    .play-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3rem;
+    }
 }
 </style>
 
@@ -147,12 +312,52 @@
                id="video-{{ loop.index }}"
                muted 
                loop 
-               controls
                preload="metadata"
-               controlsList="nodownload">
+               playsinline
+               disablePictureInPicture>
             <source src="{{ url_for('uploaded_file', filename=video.filename) }}" type="video/mp4">
             Your browser doesn't support video playback!
         </video>
+        
+        <div class="custom-video-controls" id="controls-{{ loop.index }}">
+            <div class="video-progress-container" onclick="seekVideo({{ loop.index }}, event)">
+                <div class="video-progress-bar" id="progress-{{ loop.index }}"></div>
+            </div>
+            
+            <div class="video-controls-bottom">
+                <div class="video-controls-left">
+                    <button class="control-btn play-btn" onclick="togglePlay({{ loop.index }})">
+                        <i class="fas fa-play" id="play-icon-{{ loop.index }}"></i>
+                    </button>
+                    
+                    <div class="volume-container">
+                        <button class="control-btn" onclick="toggleMute({{ loop.index }})">
+                            <i class="fas fa-volume-up" id="volume-icon-{{ loop.index }}"></i>
+                        </button>
+                        <input type="range" class="volume-slider" id="volume-{{ loop.index }}" 
+                               min="0" max="1" step="0.1" value="0"
+                               oninput="setVolume({{ loop.index }}, this.value)">
+                    </div>
+                    
+                    <div class="time-display" id="time-{{ loop.index }}">0:00 / 0:00</div>
+                </div>
+                
+                <div class="video-controls-right">
+                    <select class="speed-selector" id="speed-{{ loop.index }}" onchange="setPlaybackSpeed({{ loop.index }}, this.value)">
+                        <option value="0.5">0.5x</option>
+                        <option value="0.75">0.75x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                        <option value="2">2x</option>
+                    </select>
+                    
+                    <button class="control-btn" onclick="toggleFullscreen({{ loop.index }})">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
         
         <div class="scroll-overlay">
             <h5 class="fw-bold">{{ video.title }}</h5>
@@ -259,30 +464,70 @@ function setupVideoEventListeners() {
     // Add event listeners to all videos
     for (let i = 1; i <= totalVideos; i++) {
         const video = document.getElementById(`video-${i}`);
+        const controls = document.getElementById(`controls-${i}`);
+        
         if (video) {
             // Handle video click to toggle play/pause
             video.addEventListener('click', function(e) {
                 if (e.target === video) { // Only if clicking video, not controls
-                    if (video.paused) {
-                        video.play();
-                    } else {
-                        video.pause();
-                    }
+                    togglePlay(i);
                 }
             });
             
-            // Handle volume changes
-            video.addEventListener('volumechange', function() {
-                console.log('Volume changed:', this.volume, 'Muted:', this.muted);
+            // Update progress bar
+            video.addEventListener('timeupdate', function() {
+                updateProgress(i);
             });
             
-            // Handle play event
+            // Update duration when metadata loads
+            video.addEventListener('loadedmetadata', function() {
+                updateTimeDisplay(i);
+                // Set initial volume slider value
+                const volumeSlider = document.getElementById(`volume-${i}`);
+                if (volumeSlider) {
+                    volumeSlider.value = video.muted ? 0 : video.volume;
+                }
+            });
+            
+            // Handle play/pause state changes
             video.addEventListener('play', function() {
-                // Remove any unmute prompts when video starts playing
+                updatePlayButton(i, false);
                 const unmutePrompt = this.parentElement.querySelector('.unmute-prompt');
                 if (unmutePrompt) {
                     unmutePrompt.remove();
                 }
+            });
+            
+            video.addEventListener('pause', function() {
+                updatePlayButton(i, true);
+            });
+            
+            // Handle volume changes
+            video.addEventListener('volumechange', function() {
+                updateVolumeIcon(i);
+            });
+            
+            // Show/hide controls on hover
+            let controlsTimeout;
+            const scrollItem = video.parentElement;
+            
+            scrollItem.addEventListener('mouseenter', function() {
+                clearTimeout(controlsTimeout);
+                scrollItem.classList.add('controls-visible');
+            });
+            
+            scrollItem.addEventListener('mouseleave', function() {
+                controlsTimeout = setTimeout(() => {
+                    scrollItem.classList.remove('controls-visible');
+                }, 2000);
+            });
+            
+            scrollItem.addEventListener('mousemove', function() {
+                clearTimeout(controlsTimeout);
+                scrollItem.classList.add('controls-visible');
+                controlsTimeout = setTimeout(() => {
+                    scrollItem.classList.remove('controls-visible');
+                }, 2000);
             });
         }
     }
@@ -506,6 +751,122 @@ function showUnmutePrompt(video) {
             }
         }, 3000);
     }
+}
+
+function togglePlay(videoIndex) {
+    const video = document.getElementById(`video-${videoIndex}`);
+    if (video) {
+        if (video.paused) {
+            video.play();
+        } else {
+            video.pause();
+        }
+    }
+}
+
+function toggleMute(videoIndex) {
+    const video = document.getElementById(`video-${videoIndex}`);
+    if (video) {
+        video.muted = !video.muted;
+        const volumeSlider = document.getElementById(`volume-${videoIndex}`);
+        if (volumeSlider) {
+            volumeSlider.value = video.muted ? 0 : video.volume;
+        }
+    }
+}
+
+function setVolume(videoIndex, value) {
+    const video = document.getElementById(`video-${videoIndex}`);
+    if (video) {
+        video.volume = value;
+        video.muted = value == 0;
+    }
+}
+
+function setPlaybackSpeed(videoIndex, speed) {
+    const video = document.getElementById(`video-${videoIndex}`);
+    if (video) {
+        video.playbackRate = parseFloat(speed);
+    }
+}
+
+function seekVideo(videoIndex, event) {
+    const video = document.getElementById(`video-${videoIndex}`);
+    const progressContainer = event.currentTarget;
+    
+    if (video && video.duration) {
+        const rect = progressContainer.getBoundingClientRect();
+        const clickX = event.clientX - rect.left;
+        const percentage = clickX / rect.width;
+        video.currentTime = percentage * video.duration;
+    }
+}
+
+function toggleFullscreen(videoIndex) {
+    const scrollItem = document.querySelector(`[data-index="${videoIndex}"]`);
+    
+    if (scrollItem) {
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        } else {
+            scrollItem.requestFullscreen().catch(err => {
+                console.log('Fullscreen error:', err);
+            });
+        }
+    }
+}
+
+function updateProgress(videoIndex) {
+    const video = document.getElementById(`video-${videoIndex}`);
+    const progressBar = document.getElementById(`progress-${videoIndex}`);
+    
+    if (video && progressBar && video.duration) {
+        const percentage = (video.currentTime / video.duration) * 100;
+        progressBar.style.width = percentage + '%';
+    }
+    
+    updateTimeDisplay(videoIndex);
+}
+
+function updateTimeDisplay(videoIndex) {
+    const video = document.getElementById(`video-${videoIndex}`);
+    const timeDisplay = document.getElementById(`time-${videoIndex}`);
+    
+    if (video && timeDisplay) {
+        const current = formatTime(video.currentTime || 0);
+        const duration = formatTime(video.duration || 0);
+        timeDisplay.textContent = `${current} / ${duration}`;
+    }
+}
+
+function updatePlayButton(videoIndex, isPaused) {
+    const playIcon = document.getElementById(`play-icon-${videoIndex}`);
+    if (playIcon) {
+        playIcon.className = isPaused ? 'fas fa-play' : 'fas fa-pause';
+    }
+}
+
+function updateVolumeIcon(videoIndex) {
+    const video = document.getElementById(`video-${videoIndex}`);
+    const volumeIcon = document.getElementById(`volume-icon-${videoIndex}`);
+    
+    if (video && volumeIcon) {
+        if (video.muted || video.volume === 0) {
+            volumeIcon.className = 'fas fa-volume-mute';
+        } else if (video.volume < 0.5) {
+            volumeIcon.className = 'fas fa-volume-down';
+        } else {
+            volumeIcon.className = 'fas fa-volume-up';
+        }
+    }
+}
+
+function formatTime(seconds) {
+    if (isNaN(seconds)) return '0:00';
+    
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
 function showToast(message) {
