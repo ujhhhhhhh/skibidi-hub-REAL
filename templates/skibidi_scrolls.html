@@ -24,7 +24,7 @@
 
 .scroll-video {
     width: 100vw;
-    height: 100vh;
+    height: 75vh;
     object-fit: cover;
     cursor: pointer;
 }
@@ -536,7 +536,7 @@ function setupVideoEventListeners() {
 function handleScroll() {
     const container = document.getElementById('scrollsContainer');
     const scrollTop = container.scrollTop;
-    const itemHeight = window.innerHeight;
+    const itemHeight = window.innerHeight; // Full viewport height for scroll calculation
     const newIndex = Math.round(scrollTop / itemHeight);
     
     if (newIndex !== currentVideoIndex && newIndex >= 0 && newIndex < totalVideos) {
