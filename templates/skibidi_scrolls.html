@@ -975,15 +975,82 @@ endblock %} {% block content %}
 
     // Handle direct video links
     if (window.location.hash) {
-        const videoId = window.location.hash.substring(1);
-        const targetVideo = document.querySelector(`[data-video-id="${videoId}"]`);
-        if (targetVideo) {
-            const index = parseInt(targetVideo.dataset.index) - 1;
-            setTimeout(() => {
-                const container = document.getElementById('scrollsContainer');
-                container.scrollTo({ top: index * window.innerHeight, behavior: 'smooth' });
-            }, 100);
+            const videoId = window.location.hash.substring(1);
+            const targetVideo = document.querySelector(`[data-video-id="${videoId}"]`);
+            if (targetVideo) {
+                const index = parseInt(targetVideo.dataset.index) - 1;
+                setTimeout(() => {
+                    const container = document.getElementById('scrollsContainer');
+                    container.scrollTo({ top: index * window.innerHeight, behavior: 'smooth' });
+                }, 100);
+            }
+        }
+
+    // Fullscreen functions
+    function enterFullscreen() {
+        const body = document.body;
+        const container = document.getElementById('scrollsContainer');
+
+        if (container.requestFullscreen) {
+            container.requestFullscreen().then(() => {
+                activateFullscreenMode();
+            }).catch(err => {
+                console.error('Error entering fullscreen:', err);
+                // Fallback to pseudo-fullscreen
+                activateFullscreenMode();
+            });
+        } else {
+            // Fallback for browsers that don't support fullscreen API
+            activateFullscreenMode();
         }
     }
+
+    function activateFullscreenMode() {
+        isFullscreen = true;
+        document.body.classList.add('fullscreen-mode');
+
+        // Show hint
+        const hint = document.getElementById('fullscreenHint');
+        hint.style.display = 'block';
+        setTimeout(() => {
+            hint.style.display = 'none';
+        }, 3000);
+
+        // Ensure current video is playing
+        playCurrentVideo();
+    }
+
+    function exitFullscreen() {
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        }
+
+        isFullscreen = false;
+        document.body.classList.remove('fullscreen-mode');
+
+        // Show exit options overlay
+        const overlay = document.getElementById('exitFullscreenOverlay');
+        overlay.classList.add('show');
+
+        // Pause current video
+        pauseCurrentVideo();
+    }
+
+    function continueWatching() {
+        const overlay = document.getElementById('exitFullscreenOverlay');
+        overlay.classList.remove('show');
+
+        // Re-enter fullscreen
+        setTimeout(() => {
+            enterFullscreen();
+        }, 300);
+    }
+
+    // Close exit overlay when clicking outside options
+    document.getElementById('exitFullscreenOverlay').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('show');
+        }
+    });
 </script>
 {% endblock %}
