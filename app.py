@@ -648,6 +648,30 @@ def like_video(video_id):
     return jsonify({'action': action, 'like_count': like_count})
 
 
+@app.route('/track-view/<video_id>', methods=['POST'])
+def track_video_view(video_id):
+    """Track a video view"""
+    try:
+        videos = load_videos()
+        
+        # Find and update the video
+        for video in videos:
+            if video['id'] == video_id:
+                video['views'] = video.get('views', 0) + 1
+                
+                # Save updated videos
+                if save_videos(videos):
+                    return jsonify({'success': True, 'views': video['views']})
+                else:
+                    return jsonify({'success': False, 'error': 'Failed to save'}), 500
+        
+        return jsonify({'success': False, 'error': 'Video not found'}), 404
+        
+    except Exception as e:
+        logging.error(f"Error tracking video view: {e}")
+        return jsonify({'success': False, 'error': 'Server error'}), 500
+
+
 @app.route('/api/posts')
 def api_posts():
     """API endpoint for posts (if needed for AJAX)"""
