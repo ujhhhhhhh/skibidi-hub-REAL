@@ -1,299 +1,300 @@
-
-{% extends "base.html" %}
-
-{% block title %}Skibidi Scrolls - Skibidi Hub{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Skibidi Scrolls - Skibidi Hub{%
+endblock %} {% block content %}
 <style>
-.scrolls-container {
-    height: 100vh;
-    overflow-y: scroll;
-    scroll-snap-type: y mandatory;
-    position: relative;
-}
-
-.scroll-item {
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    scroll-snap-align: start;
-    position: relative;
-    background: #000;
-}
-
-.scroll-video {
-    width: 50vw;
-    height: 50vh;
-    object-fit: cover;
-    cursor: pointer;
-}
-
-.scroll-video::-webkit-media-controls {
-    display: none !important;
-}
-
-.scroll-video::-webkit-media-controls-panel {
-    display: none !important;
-}
-
-.scroll-video::-webkit-media-controls-play-button {
-    display: none !important;
-}
-
-.scroll-video::-webkit-media-controls-start-playback-button {
-    display: none !important;
-}
-
-.custom-video-controls {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(transparent, rgba(0,0,0,0.8));
-    padding: 1rem;
-    z-index: 20;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.scroll-item:hover .custom-video-controls,
-.scroll-item.controls-visible .custom-video-controls {
-    opacity: 1;
-}
-
-.video-progress-container {
-    position: relative;
-    height: 4px;
-    background: rgba(255,255,255,0.3);
-    border-radius: 2px;
-    margin-bottom: 1rem;
-    cursor: pointer;
-}
-
-.video-progress-bar {
-    height: 100%;
-    background: #ff0000;
-    border-radius: 2px;
-    width: 0%;
-    transition: width 0.1s ease;
-}
-
-.video-progress-container:hover {
-    height: 6px;
-}
-
-.video-controls-bottom {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    justify-content: space-between;
-}
-
-.video-controls-left {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.video-controls-right {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.control-btn {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.2rem;
-    padding: 0.5rem;
-    cursor: pointer;
-    border-radius: 50%;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-}
-
-.control-btn:hover {
-    background: rgba(255,255,255,0.2);
-    transform: scale(1.1);
-}
-
-.play-btn {
-    width: 50px;
-    height: 50px;
-    font-size: 1.5rem;
-}
-
-.volume-container {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.volume-slider {
-    width: 80px;
-    height: 4px;
-    background: rgba(255,255,255,0.3);
-    border-radius: 2px;
-    outline: none;
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.volume-container:hover .volume-slider {
-    opacity: 1;
-}
-
-.volume-slider::-webkit-slider-thumb {
-    appearance: none;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: white;
-    cursor: pointer;
-}
-
-.time-display {
-    font-size: 0.9rem;
-    color: white;
-    min-width: 80px;
-    text-align: center;
-}
-
-.speed-selector {
-    background: rgba(0,0,0,0.7);
-    color: white;
-    border: 1px solid rgba(255,255,255,0.3);
-    border-radius: 4px;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.8rem;
-    cursor: pointer;
-}
-
-.speed-selector:focus {
-    outline: none;
-    border-color: white;
-}
-
-.unmute-prompt {
-    user-select: none;
-    font-weight: bold;
-}
-
-.scroll-overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(transparent, rgba(0,0,0,0.8));
-    color: white;
-    padding: 2rem 1rem 1rem;
-    z-index: 10;
-}
-
-.scroll-actions {
-    position: absolute;
-    right: 1rem;
-    bottom: 6rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    z-index: 10;
-}
-
-.scroll-btn {
-    background: rgba(255,255,255,0.2);
-    border: 2px solid white;
-    color: white;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-}
-
-.scroll-btn:hover {
-    background: rgba(255,255,255,0.4);
-    transform: scale(1.1);
-}
-
-.nav-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: rgba(0,0,0,0.5);
-    backdrop-filter: blur(10px);
-    z-index: 100;
-    padding: 1rem;
-}
-
-.scroll-counter {
-    position: fixed;
-    top: 50%;
-    right: 1rem;
-    transform: translateY(-50%);
-    background: rgba(0,0,0,0.7);
-    color: white;
-    padding: 0.5rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    z-index: 50;
-}
-
-@media (max-width: 768px) {
-    .scroll-overlay {
-        padding: 1rem 0.5rem 0.5rem;
+    .scrolls-container {
+        height: 100vh;
+        overflow-y: scroll;
+        scroll-snap-type: y mandatory;
+        position: relative;
     }
-    
-    .scroll-actions {
-        right: 0.5rem;
-        bottom: 4rem;
+
+    .scroll-item {
+        height: 75vh;
+        width: 100vw;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        scroll-snap-align: start;
+        position: relative;
+        background: #000;
     }
-    
-    .volume-slider {
-        width: 60px;
+
+    .scroll-video {
+        width: 100%;
+        height: 100%;
+        object-fit: fill;
+        cursor: pointer;
     }
-    
-    .time-display {
-        font-size: 0.8rem;
-        min-width: 70px;
+
+    .scroll-video::-webkit-media-controls {
+        display: none !important;
     }
-    
+
+    .scroll-video::-webkit-media-controls-panel {
+        display: none !important;
+    }
+
+    .scroll-video::-webkit-media-controls-play-button {
+        display: none !important;
+    }
+
+    .scroll-video::-webkit-media-controls-start-playback-button {
+        display: none !important;
+    }
+
+    .custom-video-controls {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+        padding: 1rem;
+        z-index: 20;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .scroll-item:hover .custom-video-controls,
+    .scroll-item.controls-visible .custom-video-controls {
+        opacity: 1;
+    }
+
+    .video-progress-container {
+        position: relative;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+        margin-bottom: 1rem;
+        cursor: pointer;
+    }
+
+    .video-progress-bar {
+        height: 100%;
+        background: #ff0000;
+        border-radius: 2px;
+        width: 0%;
+        transition: width 0.1s ease;
+    }
+
+    .video-progress-container:hover {
+        height: 6px;
+    }
+
+    .video-controls-bottom {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        justify-content: space-between;
+    }
+
+    .video-controls-left {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .video-controls-right {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
     .control-btn {
-        width: 35px;
-        height: 35px;
-        font-size: 1rem;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        padding: 0.5rem;
+        cursor: pointer;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
     }
-    
+
+    .control-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.1);
+    }
+
     .play-btn {
-        width: 45px;
-        height: 45px;
-        font-size: 1.3rem;
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
     }
-}
+
+    .volume-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .volume-slider {
+        width: 80px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+        outline: none;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .volume-container:hover .volume-slider {
+        opacity: 1;
+    }
+
+    .volume-slider::-webkit-slider-thumb {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: white;
+        cursor: pointer;
+    }
+
+    .time-display {
+        font-size: 0.9rem;
+        color: white;
+        min-width: 80px;
+        text-align: center;
+    }
+
+    .speed-selector {
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+
+    .speed-selector:focus {
+        outline: none;
+        border-color: white;
+    }
+
+    .unmute-prompt {
+        user-select: none;
+        font-weight: bold;
+    }
+
+    .scroll-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+        color: white;
+        padding: 2rem 1rem 1rem;
+        z-index: 10;
+    }
+
+    .scroll-actions {
+        position: absolute;
+        right: 1rem;
+        bottom: 6rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        z-index: 10;
+    }
+
+    .scroll-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid white;
+        color: white;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    .scroll-btn:hover {
+        background: rgba(255, 255, 255, 0.4);
+        transform: scale(1.1);
+    }
+
+    .nav-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        z-index: 100;
+        padding: 1rem;
+    }
+
+    .scroll-counter {
+        position: fixed;
+        top: 50%;
+        right: 1rem;
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 0.5rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        z-index: 50;
+    }
+
+    @media (max-width: 768px) {
+        .scroll-overlay {
+            padding: 1rem 0.5rem 0.5rem;
+        }
+
+        .scroll-actions {
+            right: 0.5rem;
+            bottom: 4rem;
+        }
+
+        .volume-slider {
+            width: 60px;
+        }
+
+        .time-display {
+            font-size: 0.8rem;
+            min-width: 70px;
+        }
+
+        .control-btn {
+            width: 35px;
+            height: 35px;
+            font-size: 1rem;
+        }
+
+        .play-btn {
+            width: 45px;
+            height: 45px;
+            font-size: 1.3rem;
+        }
+    }
 </style>
 
 <div class="nav-overlay">
     <div class="d-flex justify-content-between align-items-center">
-        <h4 class="text-white mb-0">
-            🚽 Skibidi Scrolls 📱
-        </h4>
+        <h4 class="text-white mb-0">🚽 Skibidi Scrolls 📱</h4>
         <div class="d-flex gap-2">
-            <a href="{{ url_for('upload_scroll') }}" class="btn btn-primary btn-sm">
+            <a
+                href="{{ url_for('upload_scroll') }}"
+                class="btn btn-primary btn-sm"
+            >
                 <i class="fas fa-plus"></i> Upload
             </a>
-            <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">
+            <a
+                href="{{ url_for('index') }}"
+                class="btn btn-outline-light btn-sm"
+            >
                 <i class="fas fa-home"></i> Feed
             </a>
         </div>
@@ -307,43 +308,83 @@
 {% if videos %}
 <div class="scrolls-container" id="scrollsContainer">
     {% for video in videos %}
-    <div class="scroll-item" data-video-id="{{ video.id }}" data-index="{{ loop.index }}">
-        <video class="scroll-video" 
-               id="video-{{ loop.index }}"
-               muted 
-               loop 
-               preload="metadata"
-               playsinline
-               disablePictureInPicture>
-            <source src="{{ url_for('uploaded_file', filename=video.filename) }}" type="video/mp4">
+    <div
+        class="scroll-item"
+        data-video-id="{{ video.id }}"
+        data-index="{{ loop.index }}"
+    >
+        <video
+            class="scroll-video"
+            id="video-{{ loop.index }}"
+            muted
+            loop
+            preload="metadata"
+            playsinline
+            disablePictureInPicture
+        >
+            <source
+                src="{{ url_for('uploaded_file', filename=video.filename) }}"
+                type="video/mp4"
+            />
             Your browser doesn't support video playback!
         </video>
-        
+
         <div class="custom-video-controls" id="controls-{{ loop.index }}">
-            <div class="video-progress-container" onclick="seekVideo({{ loop.index }}, event)">
-                <div class="video-progress-bar" id="progress-{{ loop.index }}"></div>
+            <div
+                class="video-progress-container"
+                onclick="seekVideo({{ loop.index }}, event)"
+            >
+                <div
+                    class="video-progress-bar"
+                    id="progress-{{ loop.index }}"
+                ></div>
             </div>
-            
+
             <div class="video-controls-bottom">
                 <div class="video-controls-left">
-                    <button class="control-btn play-btn" onclick="togglePlay({{ loop.index }})">
-                        <i class="fas fa-play" id="play-icon-{{ loop.index }}"></i>
+                    <button
+                        class="control-btn play-btn"
+                        onclick="togglePlay({{ loop.index }})"
+                    >
+                        <i
+                            class="fas fa-play"
+                            id="play-icon-{{ loop.index }}"
+                        ></i>
                     </button>
-                    
+
                     <div class="volume-container">
-                        <button class="control-btn" onclick="toggleMute({{ loop.index }})">
-                            <i class="fas fa-volume-up" id="volume-icon-{{ loop.index }}"></i>
+                        <button
+                            class="control-btn"
+                            onclick="toggleMute({{ loop.index }})"
+                        >
+                            <i
+                                class="fas fa-volume-up"
+                                id="volume-icon-{{ loop.index }}"
+                            ></i>
                         </button>
-                        <input type="range" class="volume-slider" id="volume-{{ loop.index }}" 
-                               min="0" max="1" step="0.1" value="0"
-                               oninput="setVolume({{ loop.index }}, this.value)">
+                        <input
+                            type="range"
+                            class="volume-slider"
+                            id="volume-{{ loop.index }}"
+                            min="0"
+                            max="1"
+                            step="0.1"
+                            value="0"
+                            oninput="setVolume({{ loop.index }}, this.value)"
+                        />
                     </div>
-                    
-                    <div class="time-display" id="time-{{ loop.index }}">0:00 / 0:00</div>
+
+                    <div class="time-display" id="time-{{ loop.index }}">
+                        0:00 / 0:00
+                    </div>
                 </div>
-                
+
                 <div class="video-controls-right">
-                    <select class="speed-selector" id="speed-{{ loop.index }}" onchange="setPlaybackSpeed({{ loop.index }}, this.value)">
+                    <select
+                        class="speed-selector"
+                        id="speed-{{ loop.index }}"
+                        onchange="setPlaybackSpeed({{ loop.index }}, this.value)"
+                    >
                         <option value="0.5">0.5x</option>
                         <option value="0.75">0.75x</option>
                         <option value="1" selected>1x</option>
@@ -351,14 +392,17 @@
                         <option value="1.5">1.5x</option>
                         <option value="2">2x</option>
                     </select>
-                    
-                    <button class="control-btn" onclick="toggleFullscreen({{ loop.index }})">
+
+                    <button
+                        class="control-btn"
+                        onclick="toggleFullscreen({{ loop.index }})"
+                    >
                         <i class="fas fa-expand"></i>
                     </button>
                 </div>
             </div>
         </div>
-        
+
         <div class="scroll-overlay">
             <h5 class="fw-bold">{{ video.title }}</h5>
             <p class="mb-1">@{{ video.username }}</p>
@@ -367,21 +411,33 @@
             {% endif %}
             <div class="d-flex align-items-center gap-2 mb-2">
                 <small class="text-muted">ID: {{ video.id[:8] }}...</small>
-                <button class="btn btn-sm btn-outline-light" 
-                        onclick="copyToClipboard('{{ video.id }}', 'Video ID')" 
-                        title="Copy full Video ID">
+                <button
+                    class="btn btn-sm btn-outline-light"
+                    onclick="copyToClipboard('{{ video.id }}', 'Video ID')"
+                    title="Copy full Video ID"
+                >
                     <i class="fas fa-copy"></i>
                 </button>
             </div>
             <div class="d-flex gap-3 small">
-                <span><i class="fas fa-heart"></i> {{ video.like_count }} likes</span>
+                <span
+                    ><i class="fas fa-heart"></i> {{ video.like_count }}
+                    likes</span
+                >
                 <span><i class="fas fa-eye"></i> {{ video.views }} views</span>
-                <span><i class="fas fa-clock"></i> {{ moment(video.timestamp).fromNow() if moment else video.timestamp[:19].replace('T', ' ') }}</span>
+                <span
+                    ><i class="fas fa-clock"></i> {{
+                    moment(video.timestamp).fromNow() if moment else
+                    video.timestamp[:19].replace('T', ' ') }}</span
+                >
             </div>
         </div>
-        
+
         <div class="scroll-actions">
-            <button class="scroll-btn" onclick="toggleVideoLike('{{ video.id }}', this)">
+            <button
+                class="scroll-btn"
+                onclick="toggleVideoLike('{{ video.id }}', this)"
+            >
                 <i class="fas fa-heart"></i>
             </button>
             <button class="scroll-btn" onclick="copyVideoId('{{ video.id }}')">
@@ -395,11 +451,16 @@
     {% endfor %}
 </div>
 {% else %}
-<div class="d-flex align-items-center justify-content-center" style="height: 100vh; background: #000; color: white;">
+<div
+    class="d-flex align-items-center justify-content-center"
+    style="height: 100vh; background: #000; color: white"
+>
     <div class="text-center">
-        <div style="font-size: 4rem;">🚽💀</div>
+        <div style="font-size: 4rem">🚽💀</div>
         <h3>No Skibidi Scrolls yet!</h3>
-        <p class="text-muted mb-4">Be the first to drop some sigma video content!</p>
+        <p class="text-muted mb-4">
+            Be the first to drop some sigma video content!
+        </p>
         <a href="{{ url_for('upload_scroll') }}" class="btn btn-primary btn-lg">
             <i class="fas fa-plus-circle"></i> Upload First Scroll
         </a>
@@ -413,316 +474,484 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title">Like this Skibidi Scroll</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                ></button>
             </div>
             <div class="modal-body">
-                <input type="text" id="likeUsername" class="form-control" placeholder="Your username">
+                <input
+                    type="text"
+                    id="likeUsername"
+                    class="form-control"
+                    placeholder="Your username"
+                />
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="submitVideoLike()">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                >
+                    Cancel
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    onclick="submitVideoLike()"
+                >
                     <i class="fas fa-heart"></i> Like
                 </button>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script>
-let currentVideoIndex = 0;
-let currentLikeVideoId = null;
-const totalVideos = {{ videos|length }};
+    let currentVideoIndex = 0;
+    let currentLikeVideoId = null;
+    const totalVideos = {{ videos|length }};
 
-document.addEventListener('DOMContentLoaded', function() {
-    const container = document.getElementById('scrollsContainer');
-    if (!container || totalVideos === 0) return;
-    
-    // Set up scroll behavior
-    container.addEventListener('scroll', handleScroll);
-    
-    // Set up video event listeners
-    setupVideoEventListeners();
-    
-    // Play first video
-    playCurrentVideo();
-    
-    // Handle keyboard navigation
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'ArrowDown' || e.key === ' ') {
-            e.preventDefault();
-            scrollToNext();
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            scrollToPrev();
-        }
-    });
-});
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.getElementById('scrollsContainer');
+        if (!container || totalVideos === 0) return;
 
-function setupVideoEventListeners() {
-    // Add event listeners to all videos
-    for (let i = 1; i <= totalVideos; i++) {
-        const video = document.getElementById(`video-${i}`);
-        const controls = document.getElementById(`controls-${i}`);
-        
-        if (video) {
-            // Handle video click to toggle play/pause
-            video.addEventListener('click', function(e) {
-                if (e.target === video) { // Only if clicking video, not controls
-                    togglePlay(i);
-                }
-            });
-            
-            // Update progress bar
-            video.addEventListener('timeupdate', function() {
-                updateProgress(i);
-            });
-            
-            // Update duration when metadata loads
-            video.addEventListener('loadedmetadata', function() {
-                updateTimeDisplay(i);
-                // Set initial volume slider value
-                const volumeSlider = document.getElementById(`volume-${i}`);
-                if (volumeSlider) {
-                    volumeSlider.value = video.muted ? 0 : video.volume;
-                }
-            });
-            
-            // Handle play/pause state changes
-            video.addEventListener('play', function() {
-                updatePlayButton(i, false);
-                const unmutePrompt = this.parentElement.querySelector('.unmute-prompt');
-                if (unmutePrompt) {
-                    unmutePrompt.remove();
-                }
-            });
-            
-            video.addEventListener('pause', function() {
-                updatePlayButton(i, true);
-            });
-            
-            // Handle volume changes
-            video.addEventListener('volumechange', function() {
-                updateVolumeIcon(i);
-            });
-            
-            // Show/hide controls on hover
-            let controlsTimeout;
-            const scrollItem = video.parentElement;
-            
-            scrollItem.addEventListener('mouseenter', function() {
-                clearTimeout(controlsTimeout);
-                scrollItem.classList.add('controls-visible');
-            });
-            
-            scrollItem.addEventListener('mouseleave', function() {
-                controlsTimeout = setTimeout(() => {
-                    scrollItem.classList.remove('controls-visible');
-                }, 2000);
-            });
-            
-            scrollItem.addEventListener('mousemove', function() {
-                clearTimeout(controlsTimeout);
-                scrollItem.classList.add('controls-visible');
-                controlsTimeout = setTimeout(() => {
-                    scrollItem.classList.remove('controls-visible');
-                }, 2000);
-            });
-        }
-    }
-}
+        // Set up scroll behavior
+        container.addEventListener('scroll', handleScroll);
 
-function handleScroll() {
-    const container = document.getElementById('scrollsContainer');
-    const scrollTop = container.scrollTop;
-    const itemHeight = window.innerHeight; // Full viewport height for scroll calculation
-    const newIndex = Math.round(scrollTop / itemHeight);
-    
-    if (newIndex !== currentVideoIndex && newIndex >= 0 && newIndex < totalVideos) {
-        pauseCurrentVideo();
-        currentVideoIndex = newIndex;
+        // Set up video event listeners
+        setupVideoEventListeners();
+
+        // Play first video
         playCurrentVideo();
-        updateScrollCounter();
-    }
-}
 
-function playCurrentVideo() {
-    const video = document.getElementById(`video-${currentVideoIndex + 1}`);
-    if (video) {
-        video.currentTime = 0;
-        
-        // Track view when video starts playing
-        const videoItems = document.querySelectorAll(`[data-video-id]`);
-        if (videoItems[currentVideoIndex]) {
-            const videoId = videoItems[currentVideoIndex].dataset.videoId;
-            trackVideoView(videoId);
-        }
-        
-        // Try to play with better error handling
-        video.play().then(() => {
-            // Video started playing successfully
-            console.log('Video playing');
-        }).catch(e => {
-            console.log('Autoplay prevented - user interaction required:', e);
-            // Show unmute button if needed
-            showUnmutePrompt(video);
+        // Handle keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowDown' || e.key === ' ') {
+                e.preventDefault();
+                scrollToNext();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                scrollToPrev();
+            }
         });
-    }
-}
-
-function pauseCurrentVideo() {
-    const video = document.getElementById(`video-${currentVideoIndex + 1}`);
-    if (video) {
-        video.pause();
-    }
-}
-
-function updateScrollCounter() {
-    document.getElementById('current-scroll').textContent = currentVideoIndex + 1;
-}
-
-function scrollToNext() {
-    if (currentVideoIndex < totalVideos - 1) {
-        const container = document.getElementById('scrollsContainer');
-        const nextPosition = (currentVideoIndex + 1) * window.innerHeight;
-        container.scrollTo({ top: nextPosition, behavior: 'smooth' });
-    }
-}
-
-function scrollToPrev() {
-    if (currentVideoIndex > 0) {
-        const container = document.getElementById('scrollsContainer');
-        const prevPosition = (currentVideoIndex - 1) * window.innerHeight;
-        container.scrollTo({ top: prevPosition, behavior: 'smooth' });
-    }
-}
-
-function toggleVideoLike(videoId, button) {
-    currentLikeVideoId = videoId;
-    const likeModal = new bootstrap.Modal(document.getElementById('likeModal'));
-    likeModal.show();
-    
-    // Focus username input
-    setTimeout(() => {
-        document.getElementById('likeUsername').focus();
-    }, 500);
-}
-
-function submitVideoLike() {
-    const username = document.getElementById('likeUsername').value.trim();
-    if (!username) {
-        alert('Please enter your username!');
-        return;
-    }
-    
-    const formData = new FormData();
-    formData.append('username', username);
-    
-    fetch(`/like-video/${currentLikeVideoId}`, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            alert(data.error);
-        } else {
-            // Update like count in UI
-            const scrollItem = document.querySelector(`[data-video-id="${currentLikeVideoId}"]`);
-            const likeCountSpan = scrollItem.querySelector('.fa-heart').parentNode;
-            likeCountSpan.innerHTML = `<i class="fas fa-heart"></i> ${data.like_count} likes`;
-            
-            // Close modal
-            bootstrap.Modal.getInstance(document.getElementById('likeModal')).hide();
-            
-            // Clear username
-            document.getElementById('likeUsername').value = '';
-            
-            // Show feedback
-            showToast(data.action === 'liked' ? 'Sigma energy added!' : 'Like removed!');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Failed to like video. Try again!');
     });
-}
 
-function copyVideoId(videoId) {
-    navigator.clipboard.writeText(videoId).then(() => {
-        showToast('Video ID copied to clipboard!');
-    }).catch(() => {
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = videoId;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        showToast('Video ID copied to clipboard!');
-    });
-}
+    function setupVideoEventListeners() {
+        // Add event listeners to all videos
+        for (let i = 1; i <= totalVideos; i++) {
+            const video = document.getElementById(`video-${i}`);
+            const controls = document.getElementById(`controls-${i}`);
 
-function copyToClipboard(text, label) {
-    navigator.clipboard.writeText(text).then(() => {
-        showToast(`${label} copied to clipboard!`);
-    }).catch(() => {
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        showToast(`${label} copied to clipboard!`);
-    });
-}
+            if (video) {
+                // Handle video click to toggle play/pause
+                video.addEventListener('click', function(e) {
+                    if (e.target === video) { // Only if clicking video, not controls
+                        togglePlay(i);
+                    }
+                });
 
-function shareVideo(videoId) {
-    const url = `${window.location.origin}/skibidi-scrolls#${videoId}`;
-    if (navigator.share) {
-        navigator.share({
-            title: 'Check out this Skibidi Scroll!',
-            url: url
-        });
-    } else {
-        copyVideoId(url);
-        showToast('Video link copied to clipboard!');
-    }
-}
+                // Update progress bar
+                video.addEventListener('timeupdate', function() {
+                    updateProgress(i);
+                });
 
-function trackVideoView(videoId) {
-    // Track video view
-    fetch(`/track-view/${videoId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Update view count in UI
-            const scrollItem = document.querySelector(`[data-video-id="${videoId}"]`);
-            if (scrollItem) {
-                const viewSpan = scrollItem.querySelector('.fa-eye').parentNode;
-                viewSpan.innerHTML = `<i class="fas fa-eye"></i> ${data.views} views`;
+                // Update duration when metadata loads
+                video.addEventListener('loadedmetadata', function() {
+                    updateTimeDisplay(i);
+                    // Set initial volume slider value
+                    const volumeSlider = document.getElementById(`volume-${i}`);
+                    if (volumeSlider) {
+                        volumeSlider.value = video.muted ? 0 : video.volume;
+                    }
+                });
+
+                // Handle play/pause state changes
+                video.addEventListener('play', function() {
+                    updatePlayButton(i, false);
+                    const unmutePrompt = this.parentElement.querySelector('.unmute-prompt');
+                    if (unmutePrompt) {
+                        unmutePrompt.remove();
+                    }
+                });
+
+                video.addEventListener('pause', function() {
+                    updatePlayButton(i, true);
+                });
+
+                // Handle volume changes
+                video.addEventListener('volumechange', function() {
+                    updateVolumeIcon(i);
+                });
+
+                // Show/hide controls on hover
+                let controlsTimeout;
+                const scrollItem = video.parentElement;
+
+                scrollItem.addEventListener('mouseenter', function() {
+                    clearTimeout(controlsTimeout);
+                    scrollItem.classList.add('controls-visible');
+                });
+
+                scrollItem.addEventListener('mouseleave', function() {
+                    controlsTimeout = setTimeout(() => {
+                        scrollItem.classList.remove('controls-visible');
+                    }, 2000);
+                });
+
+                scrollItem.addEventListener('mousemove', function() {
+                    clearTimeout(controlsTimeout);
+                    scrollItem.classList.add('controls-visible');
+                    controlsTimeout = setTimeout(() => {
+                        scrollItem.classList.remove('controls-visible');
+                    }, 2000);
+                });
             }
         }
-    })
-    .catch(error => console.error('Error tracking view:', error));
-}
+    }
 
-function showUnmutePrompt(video) {
-    const videoContainer = video.parentElement;
-    let unmutePrompt = videoContainer.querySelector('.unmute-prompt');
-    
-    if (!unmutePrompt) {
-        unmutePrompt = document.createElement('div');
-        unmutePrompt.className = 'unmute-prompt';
-        unmutePrompt.style.cssText = `
-            position: absolute;
+    function handleScroll() {
+        const container = document.getElementById('scrollsContainer');
+        const scrollTop = container.scrollTop;
+        const itemHeight = window.innerHeight; // Full viewport height for scroll calculation
+        const newIndex = Math.round(scrollTop / itemHeight);
+
+        if (newIndex !== currentVideoIndex && newIndex >= 0 && newIndex < totalVideos) {
+            pauseCurrentVideo();
+            currentVideoIndex = newIndex;
+            playCurrentVideo();
+            updateScrollCounter();
+        }
+    }
+
+    function playCurrentVideo() {
+        const video = document.getElementById(`video-${currentVideoIndex + 1}`);
+        if (video) {
+            video.currentTime = 0;
+
+            // Track view when video starts playing
+            const videoItems = document.querySelectorAll(`[data-video-id]`);
+            if (videoItems[currentVideoIndex]) {
+                const videoId = videoItems[currentVideoIndex].dataset.videoId;
+                trackVideoView(videoId);
+            }
+
+            // Try to play with better error handling
+            video.play().then(() => {
+                // Video started playing successfully
+                console.log('Video playing');
+            }).catch(e => {
+                console.log('Autoplay prevented - user interaction required:', e);
+                // Show unmute button if needed
+                showUnmutePrompt(video);
+            });
+        }
+    }
+
+    function pauseCurrentVideo() {
+        const video = document.getElementById(`video-${currentVideoIndex + 1}`);
+        if (video) {
+            video.pause();
+        }
+    }
+
+    function updateScrollCounter() {
+        document.getElementById('current-scroll').textContent = currentVideoIndex + 1;
+    }
+
+    function scrollToNext() {
+        if (currentVideoIndex < totalVideos - 1) {
+            const container = document.getElementById('scrollsContainer');
+            const nextPosition = (currentVideoIndex + 1) * window.innerHeight;
+            container.scrollTo({ top: nextPosition, behavior: 'smooth' });
+        }
+    }
+
+    function scrollToPrev() {
+        if (currentVideoIndex > 0) {
+            const container = document.getElementById('scrollsContainer');
+            const prevPosition = (currentVideoIndex - 1) * window.innerHeight;
+            container.scrollTo({ top: prevPosition, behavior: 'smooth' });
+        }
+    }
+
+    function toggleVideoLike(videoId, button) {
+        currentLikeVideoId = videoId;
+        const likeModal = new bootstrap.Modal(document.getElementById('likeModal'));
+        likeModal.show();
+
+        // Focus username input
+        setTimeout(() => {
+            document.getElementById('likeUsername').focus();
+        }, 500);
+    }
+
+    function submitVideoLike() {
+        const username = document.getElementById('likeUsername').value.trim();
+        if (!username) {
+            alert('Please enter your username!');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('username', username);
+
+        fetch(`/like-video/${currentLikeVideoId}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+            } else {
+                // Update like count in UI
+                const scrollItem = document.querySelector(`[data-video-id="${currentLikeVideoId}"]`);
+                const likeCountSpan = scrollItem.querySelector('.fa-heart').parentNode;
+                likeCountSpan.innerHTML = `<i class="fas fa-heart"></i> ${data.like_count} likes`;
+
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('likeModal')).hide();
+
+                // Clear username
+                document.getElementById('likeUsername').value = '';
+
+                // Show feedback
+                showToast(data.action === 'liked' ? 'Sigma energy added!' : 'Like removed!');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to like video. Try again!');
+        });
+    }
+
+    function copyVideoId(videoId) {
+        navigator.clipboard.writeText(videoId).then(() => {
+            showToast('Video ID copied to clipboard!');
+        }).catch(() => {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = videoId;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showToast('Video ID copied to clipboard!');
+        });
+    }
+
+    function copyToClipboard(text, label) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast(`${label} copied to clipboard!`);
+        }).catch(() => {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showToast(`${label} copied to clipboard!`);
+        });
+    }
+
+    function shareVideo(videoId) {
+        const url = `${window.location.origin}/skibidi-scrolls#${videoId}`;
+        if (navigator.share) {
+            navigator.share({
+                title: 'Check out this Skibidi Scroll!',
+                url: url
+            });
+        } else {
+            copyVideoId(url);
+            showToast('Video link copied to clipboard!');
+        }
+    }
+
+    function trackVideoView(videoId) {
+        // Track video view
+        fetch(`/track-view/${videoId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update view count in UI
+                const scrollItem = document.querySelector(`[data-video-id="${videoId}"]`);
+                if (scrollItem) {
+                    const viewSpan = scrollItem.querySelector('.fa-eye').parentNode;
+                    viewSpan.innerHTML = `<i class="fas fa-eye"></i> ${data.views} views`;
+                }
+            }
+        })
+        .catch(error => console.error('Error tracking view:', error));
+    }
+
+    function showUnmutePrompt(video) {
+        const videoContainer = video.parentElement;
+        let unmutePrompt = videoContainer.querySelector('.unmute-prompt');
+
+        if (!unmutePrompt) {
+            unmutePrompt = document.createElement('div');
+            unmutePrompt.className = 'unmute-prompt';
+            unmutePrompt.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0,0,0,0.8);
+                color: white;
+                padding: 1rem 2rem;
+                border-radius: 25px;
+                z-index: 20;
+                cursor: pointer;
+                backdrop-filter: blur(10px);
+            `;
+            unmutePrompt.innerHTML = '<i class="fas fa-volume-up"></i> Tap to unmute';
+
+            unmutePrompt.addEventListener('click', function() {
+                video.muted = false;
+                video.play();
+                this.remove();
+            });
+
+            videoContainer.appendChild(unmutePrompt);
+
+            // Auto-remove after 3 seconds
+            setTimeout(() => {
+                if (unmutePrompt.parentNode) {
+                    unmutePrompt.remove();
+                }
+            }, 3000);
+        }
+    }
+
+    function togglePlay(videoIndex) {
+        const video = document.getElementById(`video-${videoIndex}`);
+        if (video) {
+            if (video.paused) {
+                video.play();
+            } else {
+                video.pause();
+            }
+        }
+    }
+
+    function toggleMute(videoIndex) {
+        const video = document.getElementById(`video-${videoIndex}`);
+        if (video) {
+            video.muted = !video.muted;
+            const volumeSlider = document.getElementById(`volume-${videoIndex}`);
+            if (volumeSlider) {
+                volumeSlider.value = video.muted ? 0 : video.volume;
+            }
+        }
+    }
+
+    function setVolume(videoIndex, value) {
+        const video = document.getElementById(`video-${videoIndex}`);
+        if (video) {
+            video.volume = value;
+            video.muted = value == 0;
+        }
+    }
+
+    function setPlaybackSpeed(videoIndex, speed) {
+        const video = document.getElementById(`video-${videoIndex}`);
+        if (video) {
+            video.playbackRate = parseFloat(speed);
+        }
+    }
+
+    function seekVideo(videoIndex, event) {
+        const video = document.getElementById(`video-${videoIndex}`);
+        const progressContainer = event.currentTarget;
+
+        if (video && video.duration) {
+            const rect = progressContainer.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const percentage = clickX / rect.width;
+            video.currentTime = percentage * video.duration;
+        }
+    }
+
+    function toggleFullscreen(videoIndex) {
+        const scrollItem = document.querySelector(`[data-index="${videoIndex}"]`);
+
+        if (scrollItem) {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                scrollItem.requestFullscreen().catch(err => {
+                    console.log('Fullscreen error:', err);
+                });
+            }
+        }
+    }
+
+    function updateProgress(videoIndex) {
+        const video = document.getElementById(`video-${videoIndex}`);
+        const progressBar = document.getElementById(`progress-${videoIndex}`);
+
+        if (video && progressBar && video.duration) {
+            const percentage = (video.currentTime / video.duration) * 100;
+            progressBar.style.width = percentage + '%';
+        }
+
+        updateTimeDisplay(videoIndex);
+    }
+
+    function updateTimeDisplay(videoIndex) {
+        const video = document.getElementById(`video-${videoIndex}`);
+        const timeDisplay = document.getElementById(`time-${videoIndex}`);
+
+        if (video && timeDisplay) {
+            const current = formatTime(video.currentTime || 0);
+            const duration = formatTime(video.duration || 0);
+            timeDisplay.textContent = `${current} / ${duration}`;
+        }
+    }
+
+    function updatePlayButton(videoIndex, isPaused) {
+        const playIcon = document.getElementById(`play-icon-${videoIndex}`);
+        if (playIcon) {
+            playIcon.className = isPaused ? 'fas fa-play' : 'fas fa-pause';
+        }
+    }
+
+    function updateVolumeIcon(videoIndex) {
+        const video = document.getElementById(`video-${videoIndex}`);
+        const volumeIcon = document.getElementById(`volume-icon-${videoIndex}`);
+
+        if (video && volumeIcon) {
+            if (video.muted || video.volume === 0) {
+                volumeIcon.className = 'fas fa-volume-mute';
+            } else if (video.volume < 0.5) {
+                volumeIcon.className = 'fas fa-volume-down';
+            } else {
+                volumeIcon.className = 'fas fa-volume-up';
+            }
+        }
+    }
+
+    function formatTime(seconds) {
+        if (isNaN(seconds)) return '0:00';
+
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+
+    function showToast(message) {
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -730,182 +959,31 @@ function showUnmutePrompt(video) {
             color: white;
             padding: 1rem 2rem;
             border-radius: 25px;
-            z-index: 20;
-            cursor: pointer;
+            z-index: 1000;
+            font-weight: bold;
             backdrop-filter: blur(10px);
         `;
-        unmutePrompt.innerHTML = '<i class="fas fa-volume-up"></i> Tap to unmute';
-        
-        unmutePrompt.addEventListener('click', function() {
-            video.muted = false;
-            video.play();
-            this.remove();
-        });
-        
-        videoContainer.appendChild(unmutePrompt);
-        
-        // Auto-remove after 3 seconds
+        toast.textContent = message;
+
+        document.body.appendChild(toast);
+
+        // Remove after 2 seconds
         setTimeout(() => {
-            if (unmutePrompt.parentNode) {
-                unmutePrompt.remove();
-            }
-        }, 3000);
+            document.body.removeChild(toast);
+        }, 2000);
     }
-}
 
-function togglePlay(videoIndex) {
-    const video = document.getElementById(`video-${videoIndex}`);
-    if (video) {
-        if (video.paused) {
-            video.play();
-        } else {
-            video.pause();
+    // Handle direct video links
+    if (window.location.hash) {
+        const videoId = window.location.hash.substring(1);
+        const targetVideo = document.querySelector(`[data-video-id="${videoId}"]`);
+        if (targetVideo) {
+            const index = parseInt(targetVideo.dataset.index) - 1;
+            setTimeout(() => {
+                const container = document.getElementById('scrollsContainer');
+                container.scrollTo({ top: index * window.innerHeight, behavior: 'smooth' });
+            }, 100);
         }
     }
-}
-
-function toggleMute(videoIndex) {
-    const video = document.getElementById(`video-${videoIndex}`);
-    if (video) {
-        video.muted = !video.muted;
-        const volumeSlider = document.getElementById(`volume-${videoIndex}`);
-        if (volumeSlider) {
-            volumeSlider.value = video.muted ? 0 : video.volume;
-        }
-    }
-}
-
-function setVolume(videoIndex, value) {
-    const video = document.getElementById(`video-${videoIndex}`);
-    if (video) {
-        video.volume = value;
-        video.muted = value == 0;
-    }
-}
-
-function setPlaybackSpeed(videoIndex, speed) {
-    const video = document.getElementById(`video-${videoIndex}`);
-    if (video) {
-        video.playbackRate = parseFloat(speed);
-    }
-}
-
-function seekVideo(videoIndex, event) {
-    const video = document.getElementById(`video-${videoIndex}`);
-    const progressContainer = event.currentTarget;
-    
-    if (video && video.duration) {
-        const rect = progressContainer.getBoundingClientRect();
-        const clickX = event.clientX - rect.left;
-        const percentage = clickX / rect.width;
-        video.currentTime = percentage * video.duration;
-    }
-}
-
-function toggleFullscreen(videoIndex) {
-    const scrollItem = document.querySelector(`[data-index="${videoIndex}"]`);
-    
-    if (scrollItem) {
-        if (document.fullscreenElement) {
-            document.exitFullscreen();
-        } else {
-            scrollItem.requestFullscreen().catch(err => {
-                console.log('Fullscreen error:', err);
-            });
-        }
-    }
-}
-
-function updateProgress(videoIndex) {
-    const video = document.getElementById(`video-${videoIndex}`);
-    const progressBar = document.getElementById(`progress-${videoIndex}`);
-    
-    if (video && progressBar && video.duration) {
-        const percentage = (video.currentTime / video.duration) * 100;
-        progressBar.style.width = percentage + '%';
-    }
-    
-    updateTimeDisplay(videoIndex);
-}
-
-function updateTimeDisplay(videoIndex) {
-    const video = document.getElementById(`video-${videoIndex}`);
-    const timeDisplay = document.getElementById(`time-${videoIndex}`);
-    
-    if (video && timeDisplay) {
-        const current = formatTime(video.currentTime || 0);
-        const duration = formatTime(video.duration || 0);
-        timeDisplay.textContent = `${current} / ${duration}`;
-    }
-}
-
-function updatePlayButton(videoIndex, isPaused) {
-    const playIcon = document.getElementById(`play-icon-${videoIndex}`);
-    if (playIcon) {
-        playIcon.className = isPaused ? 'fas fa-play' : 'fas fa-pause';
-    }
-}
-
-function updateVolumeIcon(videoIndex) {
-    const video = document.getElementById(`video-${videoIndex}`);
-    const volumeIcon = document.getElementById(`volume-icon-${videoIndex}`);
-    
-    if (video && volumeIcon) {
-        if (video.muted || video.volume === 0) {
-            volumeIcon.className = 'fas fa-volume-mute';
-        } else if (video.volume < 0.5) {
-            volumeIcon.className = 'fas fa-volume-down';
-        } else {
-            volumeIcon.className = 'fas fa-volume-up';
-        }
-    }
-}
-
-function formatTime(seconds) {
-    if (isNaN(seconds)) return '0:00';
-    
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-}
-
-function showToast(message) {
-    // Create toast element
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(0,0,0,0.8);
-        color: white;
-        padding: 1rem 2rem;
-        border-radius: 25px;
-        z-index: 1000;
-        font-weight: bold;
-        backdrop-filter: blur(10px);
-    `;
-    toast.textContent = message;
-    
-    document.body.appendChild(toast);
-    
-    // Remove after 2 seconds
-    setTimeout(() => {
-        document.body.removeChild(toast);
-    }, 2000);
-}
-
-// Handle direct video links
-if (window.location.hash) {
-    const videoId = window.location.hash.substring(1);
-    const targetVideo = document.querySelector(`[data-video-id="${videoId}"]`);
-    if (targetVideo) {
-        const index = parseInt(targetVideo.dataset.index) - 1;
-        setTimeout(() => {
-            const container = document.getElementById('scrollsContainer');
-            container.scrollTo({ top: index * window.innerHeight, behavior: 'smooth' });
-        }, 100);
-    }
-}
 </script>
 {% endblock %}
