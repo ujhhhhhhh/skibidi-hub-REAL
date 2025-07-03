@@ -79,9 +79,12 @@ This is a Flask-based community hub application themed around internet memes and
 - **Bootstrap 5**: CSS framework via CDN
 - **Font Awesome**: Icon library via CDN
 
-### File Upload Constraints
-- **Maximum Size**: 25MB per file
+### File Upload Constraints (Vercel Optimized)
+- **Maximum File Size**: 2.5MB per file (Vercel 3MB payload limit compliance)
 - **Text Limit**: 2KB for post content
+- **Comment Limit**: 500 bytes per comment
+- **Username Limit**: 50 characters
+- **Total Request Limit**: 3MB (enforced via payload validation)
 - **Allowed Extensions**: txt, pdf, png, jpg, jpeg, gif, mp4, webm, mp3, wav, doc, docx, zip
 
 ## Deployment Strategy
@@ -178,6 +181,15 @@ This is a Flask-based community hub application themed around internet memes and
   - Backup system sends JSON data to BACKUP_URL without retrieval functionality
   - Enhanced performance with instant in-memory data operations
   - Completely virtual filesystem - no local file dependencies
+- July 3, 2025. Vercel payload compliance implementation:
+  - Implemented comprehensive 3MB payload limit validation for all endpoints
+  - Reduced maximum file size from 25MB to 2.5MB to ensure Vercel compatibility
+  - Added payload size validation functions for create posts, comments, and video uploads
+  - Updated all frontend templates to display new 2.5MB file size limits
+  - Added request size calculation before processing any uploads
+  - Enhanced backup system with payload size monitoring and warnings
+  - Updated JavaScript validation to enforce 2.5MB limits client-side
+  - All user actions now validated against Vercel's 3MB request limit
 
 ## User Preferences
 

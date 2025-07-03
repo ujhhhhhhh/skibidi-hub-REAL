@@ -87,10 +87,23 @@ class MemoryStorage:
             return
         
         try:
+            all_data = self.get_all_data()
             backup_data = {
                 'timestamp': datetime.now().isoformat(),
-                'data': self.get_all_data()
+                'data': all_data
             }
+            
+            # Check backup payload size (most web servers handle 8-32MB by default)
+            backup_json = json.dumps(backup_data, default=str)
+            backup_size = len(backup_json.encode('utf-8'))
+            backup_size_mb = backup_size / 1024 / 1024
+            
+            # Log backup size for monitoring
+            logger.info(f"Backup payload size: {backup_size_mb:.2f}MB")
+            
+            # If backup is getting large, warn but still try to send
+            if backup_size_mb > 10:  # Warn at 10MB
+                logger.warning(f"Large backup payload: {backup_size_mb:.2f}MB - consider data cleanup")
             
             # Ensure URL ends with / for proper endpoint access
             backup_url = self.backup_url.rstrip('/') + '/'

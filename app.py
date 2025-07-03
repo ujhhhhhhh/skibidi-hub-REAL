@@ -3,6 +3,7 @@ import json
 import uuid
 import logging
 import math
+import sys
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
@@ -18,8 +19,13 @@ app.secret_key = os.environ.get("SESSION_SECRET",
 # Configuration - no longer using local file storage
 # All files are stored in memory as base64 encoded data
 
-MAX_CONTENT_LENGTH = 25 * 1024 * 1024  # 25MB
-TEXT_MAX_LENGTH = 2048  # 2KB
+# VERCEL PAYLOAD LIMITS - Critical for deployment
+VERCEL_MAX_PAYLOAD = 3 * 1024 * 1024  # 3MB Vercel limit
+MAX_CONTENT_LENGTH = 2.5 * 1024 * 1024  # 2.5MB max file size (leave buffer for other data)
+TEXT_MAX_LENGTH = 2048  # 2KB max text content
+MAX_COMMENT_LENGTH = 500  # 500 bytes max comment
+MAX_USERNAME_LENGTH = 50  # 50 chars max username
+
 ALLOWED_EXTENSIONS = {
     'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'mp4', 'webm', 'mp3', 'wav',
     'doc', 'docx', 'zip'
@@ -28,7 +34,45 @@ VIDEO_EXTENSIONS = {'mp4', 'webm', 'mov', 'avi'}
 POSTS_PER_PAGE = 10  # Pagination
 COMMENTS_PER_PAGE = 5  # Comments pagination
 
-app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
+app.config['MAX_CONTENT_LENGTH'] = VERCEL_MAX_PAYLOAD
+
+# Payload validation functions
+def calculate_request_size():
+    """Calculate the approximate size of the current request"""
+    size = 0
+    
+    # Form data size
+    if request.form:
+        for key, value in request.form.items():
+            size += len(str(key).encode('utf-8')) + len(str(value).encode('utf-8'))
+    
+    # File size
+    if request.files:
+        for key, file in request.files.items():
+            if file and file.filename:
+                # Seek to end to get size, then back to beginning
+                file.seek(0, 2)
+                file_size = file.tell()
+                file.seek(0)
+                size += file_size
+    
+    return size
+
+def validate_payload_size():
+    """Validate that the request doesn't exceed Vercel's 3MB limit"""
+    size = calculate_request_size()
+    if size > VERCEL_MAX_PAYLOAD:
+        return False, f"Request too large ({size/1024/1024:.1f}MB). Maximum allowed: 3MB"
+    return True, size
+
+def validate_text_content(content, max_length, field_name):
+    """Validate text content length"""
+    if not content:
+        return True, ""
+    
+    if len(content.encode('utf-8')) > max_length:
+        return False, f"{field_name} too long. Maximum: {max_length} bytes"
+    return True, ""
 
 # Maintenance mode check
 @app.before_request
@@ -367,25 +411,34 @@ def index():
 def create_post_route():
     """Create new post"""
     if request.method == 'POST':
+        # First validate payload size for Vercel compatibility
+        is_valid, size_info = validate_payload_size()
+        if not is_valid:
+            flash(f'{size_info} Please reduce file size or content length.', 'error')
+            return render_template('create_post.html')
+        
         username = request.form.get('username', '').strip()
         content = request.form.get('content', '').strip()
 
-        # Validate inputs
+        # Validate inputs with proper limits
         if not username:
-            flash('Bruh, you gotta drop your Skibidi username! No cap! 🚽',
-                  'error')
+            flash('Bruh, you gotta drop your Skibidi username! No cap! 🚽', 'error')
+            return render_template('create_post.html')
+
+        # Validate username length
+        is_valid, error_msg = validate_text_content(username, MAX_USERNAME_LENGTH, "Username")
+        if not is_valid:
+            flash(error_msg, 'error')
             return render_template('create_post.html')
 
         if not content:
-            flash(
-                'Yo, you forgot the Skibidi content! Drop some brainrot wisdom! 📸',
-                'error')
+            flash('Yo, you forgot the Skibidi content! Drop some brainrot wisdom! 📸', 'error')
             return render_template('create_post.html')
 
-        if len(content.encode('utf-8')) > TEXT_MAX_LENGTH:
-            flash(
-                f'That post is too long, fam! Keep it under {TEXT_MAX_LENGTH} bytes for maximum sigma energy! ⚡',
-                'error')
+        # Validate content length
+        is_valid, error_msg = validate_text_content(content, TEXT_MAX_LENGTH, "Post content")
+        if not is_valid:
+            flash(error_msg, 'error')
             return render_template('create_post.html')
 
         # Handle file upload to Vercel blob storage
@@ -402,11 +455,18 @@ def create_post_route():
                     try:
                         # Store file in memory
                         file_content = file.read()
+                        file_size = len(file_content)
+                        
+                        # Check individual file size
+                        if file_size > MAX_CONTENT_LENGTH:
+                            flash(f'File too large! Maximum size: {MAX_CONTENT_LENGTH/1024/1024:.1f}MB', 'error')
+                            return render_template('create_post.html')
+                        
                         content_type = file.content_type or 'application/octet-stream'
                         
                         if memory_storage.store_file(file_content, unique_filename, content_type):
                             uploaded_filename = unique_filename
-                            logging.info(f"File stored in memory: {unique_filename}")
+                            logging.info(f"File stored in memory: {unique_filename} ({file_size} bytes)")
                         else:
                             flash('Failed to upload your Skibidi content! Try again, sigma! 💀', 'error')
                             return render_template('create_post.html')
@@ -460,23 +520,33 @@ def like_post(post_id):
 @app.route('/comment/<post_id>', methods=['POST'])
 def add_comment_route(post_id):
     """Add comment to a post"""
+    # Validate payload size first
+    is_valid, size_info = validate_payload_size()
+    if not is_valid:
+        flash(f'{size_info}', 'error')
+        return redirect(url_for('index'))
+    
     username = request.form.get('username', '').strip()
     comment_content = request.form.get('comment', '').strip()
 
     if not username:
-        flash(
-            'Bruh, drop your username to comment! No anonymous Ohio energy! 🚽',
-            'error')
+        flash('Bruh, drop your username to comment! No anonymous Ohio energy! 🚽', 'error')
+        return redirect(url_for('index'))
+
+    # Validate username length
+    is_valid, error_msg = validate_text_content(username, MAX_USERNAME_LENGTH, "Username")
+    if not is_valid:
+        flash(error_msg, 'error')
         return redirect(url_for('index'))
 
     if not comment_content:
         flash('You gotta write something sigma for your comment! 📸', 'error')
         return redirect(url_for('index'))
 
-    if len(comment_content.encode('utf-8')) > 500:  # 500 bytes for comments
-        flash(
-            'That comment is too long! Keep it under 500 bytes for maximum brainrot! 💀',
-            'error')
+    # Validate comment length using our validation function
+    is_valid, error_msg = validate_text_content(comment_content, MAX_COMMENT_LENGTH, "Comment")
+    if not is_valid:
+        flash(error_msg, 'error')
         return redirect(url_for('index'))
 
     comment = add_comment(post_id, username, comment_content)
@@ -576,18 +646,43 @@ def skibidi_scrolls():
 def upload_scroll():
     """Upload new Skibidi Scroll video"""
     if request.method == 'POST':
+        # Validate payload size first
+        is_valid, size_info = validate_payload_size()
+        if not is_valid:
+            flash(f'{size_info} Please reduce video size or content length.', 'error')
+            return render_template('upload_scroll.html')
+        
         username = request.form.get('username', '').strip()
         title = request.form.get('title', '').strip()
         description = request.form.get('description', '').strip()
 
-        # Validate inputs
+        # Validate inputs with proper limits
         if not username:
             flash('Bruh, you gotta drop your Skibidi username! No cap! 🚽', 'error')
+            return render_template('upload_scroll.html')
+
+        # Validate username length
+        is_valid, error_msg = validate_text_content(username, MAX_USERNAME_LENGTH, "Username")
+        if not is_valid:
+            flash(error_msg, 'error')
             return render_template('upload_scroll.html')
 
         if not title:
             flash('Your Skibidi Scroll needs a sigma title! 📸', 'error')
             return render_template('upload_scroll.html')
+
+        # Validate title length
+        is_valid, error_msg = validate_text_content(title, TEXT_MAX_LENGTH, "Title")
+        if not is_valid:
+            flash(error_msg, 'error')
+            return render_template('upload_scroll.html')
+
+        # Validate description length if provided
+        if description:
+            is_valid, error_msg = validate_text_content(description, TEXT_MAX_LENGTH, "Description")
+            if not is_valid:
+                flash(error_msg, 'error')
+                return render_template('upload_scroll.html')
 
         # Handle video upload
         if 'video' not in request.files:
@@ -608,6 +703,13 @@ def upload_scroll():
             try:
                 # Store video file in memory
                 video_content = video_file.read()
+                video_size = len(video_content)
+                
+                # Check individual video file size
+                if video_size > MAX_CONTENT_LENGTH:
+                    flash(f'Video too large! Maximum size: {MAX_CONTENT_LENGTH/1024/1024:.1f}MB', 'error')
+                    return render_template('upload_scroll.html')
+                
                 content_type = video_file.content_type or f'video/{file_extension}'
                 
                 if memory_storage.store_file(video_content, unique_filename, content_type):
@@ -615,6 +717,7 @@ def upload_scroll():
                     video = create_video(username, title, description, unique_filename)
                     if video:
                         flash('Skibidi Scroll uploaded successfully! Absolute sigma energy! 🚽✨', 'success')
+                        logging.info(f"Video stored in memory: {unique_filename} ({video_size} bytes)")
                         return redirect(url_for('skibidi_scrolls'))
                     else:
                         flash('Failed to create your Skibidi Scroll! The toilet gods are angry! 😱', 'error')

@@ -84,12 +84,12 @@ function setupFileUpload() {
 
 function updateFileDisplay(file) {
     const fileUploadArea = document.querySelector('.file-upload-area');
-    const maxSize = 25 * 1024 * 1024; // 25MB
+    const maxSize = 2.5 * 1024 * 1024; // 2.5MB
     
     if (file.size > maxSize) {
         fileUploadArea.innerHTML = `
             <div class="skibidi-emoji">💀</div>
-            <p style="color: #dc2626; font-weight: bold;">File too chonky! Keep it under 25MB!</p>
+            <p style="color: #dc2626; font-weight: bold;">File too chonky! Keep it under 2.5MB!</p>
             <p style="color: #6b7280;">Selected: ${file.name} (${formatFileSize(file.size)})</p>
         `;
         return;

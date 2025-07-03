@@ -77,7 +77,7 @@
                            required>
                     <div class="form-text">
                         Supported formats: MP4, WebM, MOV, AVI<br>
-                        Maximum file size: 25MB for optimal sigma performance!
+                        Maximum file size: 2.5MB for optimal sigma performance!
                     </div>
                 </div>
 
@@ -110,9 +110,9 @@ document.addEventListener('DOMContentLoaded', function() {
     videoInput.addEventListener('change', function() {
         const file = this.files[0];
         if (file) {
-            const maxSize = 25 * 1024 * 1024; // 25MB
+            const maxSize = 2.5 * 1024 * 1024; // 2.5MB
             if (file.size > maxSize) {
-                alert('File too large! Maximum size is 25MB for maximum sigma energy! 🚽');
+                alert('File too large! Maximum size is 2.5MB for maximum sigma energy! 🚽');
                 this.value = '';
                 return;
             }
