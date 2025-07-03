@@ -1,0 +1,46 @@
+# Security configuration for Skibidi Hub Backup Server
+
+# Deny access to sensitive files
+<Files "backup.log">
+    Require all denied
+</Files>
+
+<Files ".rate_limit_*">
+    Require all denied
+</Files>
+
+<FilesMatch "\.json$">
+    Require all denied
+</FilesMatch>
+
+# Block common exploit attempts
+<FilesMatch "\.(php|inc|conf|config|sql|bak|old|tmp)$">
+    <RequireAll>
+        Require all granted
+        Require not env block_request
+    </RequireAll>
+</FilesMatch>
+
+# Prevent directory browsing
+Options -Indexes
+
+# Security headers
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# Rate limiting (if mod_evasive is available)
+<IfModule mod_evasive24.c>
+    DOSHashTableSize    2048
+    DOSPageCount        10
+    DOSPageInterval     1
+    DOSSiteCount        50
+    DOSSiteInterval     1
+    DOSBlockingPeriod   3600
+</IfModule>
+
+# Compress JSON responses
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
