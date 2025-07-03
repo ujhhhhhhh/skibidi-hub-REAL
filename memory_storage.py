@@ -92,20 +92,38 @@ class MemoryStorage:
                 'data': self.get_all_data()
             }
             
+            # Ensure URL ends with / for proper endpoint access
+            backup_url = self.backup_url.rstrip('/') + '/'
+            
             response = requests.post(
-                self.backup_url,
+                backup_url,
                 json=backup_data,
-                headers={'Content-Type': 'application/json'},
-                timeout=30
+                headers={
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'SkibidiHub-Backup/1.0'
+                },
+                timeout=60,  # Increased timeout for large files
+                verify=True  # Verify SSL certificates
             )
             
             if response.status_code == 200:
-                logger.info("Backup sent successfully")
+                logger.info(f"Backup sent successfully to {backup_url}")
+                try:
+                    result = response.json()
+                    logger.info(f"Server response: {result.get('message', 'OK')}")
+                except:
+                    pass
             else:
-                logger.warning(f"Backup failed with status {response.status_code}: {response.text}")
+                logger.warning(f"Backup failed with status {response.status_code}: {response.text[:200]}")
                 
+        except requests.exceptions.ConnectTimeout:
+            logger.error("Backup failed: Connection timeout")
+        except requests.exceptions.ConnectionError:
+            logger.error("Backup failed: Cannot connect to backup server")
+        except requests.exceptions.SSLError:
+            logger.error("Backup failed: SSL certificate error")
         except Exception as e:
-            logger.error(f"Error sending backup: {e}")
+            logger.error(f"Backup failed: {e}")
     
     def store_file(self, file_content: bytes, filename: str, content_type: Optional[str] = None) -> bool:
         """Store file content in memory as base64"""
