@@ -31,6 +31,17 @@ COMMENTS_PER_PAGE = 5  # Comments pagination
 
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 
+# Maintenance mode check
+@app.before_request
+def check_maintenance_mode():
+    """Check if maintenance mode is enabled"""
+    maintenance_mode = os.environ.get('MAINTENANCE_MODE', '').lower()
+    if maintenance_mode in ['true', '1', 'yes', 'on']:
+        # Allow access to static files for the maintenance page
+        if request.endpoint and request.endpoint.startswith('static'):
+            return None
+        return render_template('maintenance.html'), 503
+
 # Migrate existing data on startup (if available)
 try:
     if os.path.exists('data') or os.path.exists('uploads'):
