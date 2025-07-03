@@ -118,10 +118,10 @@ class MemoryStorage:
                 
         except requests.exceptions.ConnectTimeout:
             logger.error("Backup failed: Connection timeout")
-        except requests.exceptions.ConnectionError:
-            logger.error("Backup failed: Cannot connect to backup server")
         except requests.exceptions.SSLError:
             logger.error("Backup failed: SSL certificate error")
+        except requests.exceptions.ConnectionError:
+            logger.error("Backup failed: Cannot connect to backup server")
         except Exception as e:
             logger.error(f"Backup failed: {e}")
     
