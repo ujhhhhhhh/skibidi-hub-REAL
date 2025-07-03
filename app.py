@@ -7,7 +7,7 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory
-from storage_service import storage_service
+from memory_storage import memory_storage
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -42,26 +42,12 @@ def check_maintenance_mode():
             return None
         return render_template('maintenance.html'), 503
 
-# Migrate existing data on startup (if available)
-try:
-    if os.path.exists('data') or os.path.exists('uploads'):
-        logging.info(
-            "Found local data folders, attempting migration to Vercel blob storage..."
-        )
-        migration_success = storage_service.migrate_local_data()
-        if migration_success:
-            logging.info(
-                "Successfully migrated local data to Vercel blob storage")
-        else:
-            logging.warning(
-                "Migration completed with some errors - check logs for details"
-            )
-    else:
-        logging.info(
-            "No local data found, starting fresh with Vercel blob storage")
-except Exception as e:
-    logging.error(f"Error during migration: {e}")
-    logging.info("Continuing with Vercel blob storage anyway")
+# Initialize in-memory storage
+logging.info("Using in-memory storage with backup functionality")
+if os.environ.get('BACKUP_URL'):
+    logging.info(f"Backup URL configured: {os.environ.get('BACKUP_URL')}")
+else:
+    logging.warning("No BACKUP_URL configured - backups disabled")
 
 
 def allowed_file(filename):
@@ -74,9 +60,9 @@ def allowed_file(filename):
 
 
 def load_posts():
-    """Load all posts from Vercel blob storage"""
+    """Load all posts from memory storage"""
     try:
-        posts = storage_service.get_json_data('posts', [])
+        posts = memory_storage.get_data('posts', [])
         # Sort by timestamp descending (newest first)
         return sorted(posts,
                       key=lambda x: x.get('timestamp', ''),
@@ -89,7 +75,7 @@ def load_posts():
 def load_comments():
     """Load all comments from Vercel blob storage"""
     try:
-        data = storage_service.get_json_data('comments', {})
+        data = memory_storage.get_data('comments', {})
         # Ensure data is a dictionary, not a list
         if isinstance(data, list):
             logging.warning("Comments data is a list, converting to empty dict")
@@ -103,7 +89,7 @@ def load_comments():
 def load_likes():
     """Load all likes from Vercel blob storage"""
     try:
-        data = storage_service.get_json_data('likes', {})
+        data = memory_storage.get_data('likes', {})
         # Ensure data is a dictionary, not a list
         if isinstance(data, list):
             logging.warning("Likes data is a list, converting to empty dict")
@@ -117,7 +103,7 @@ def load_likes():
 def load_hall_of_fame():
     """Load hall of fame posts from Vercel blob storage"""
     try:
-        return storage_service.get_json_data('hall_of_fame', [])
+        return memory_storage.get_data('hall_of_fame', [])
     except Exception as e:
         logging.error(f"Error loading hall of fame: {e}")
         return []
@@ -126,7 +112,7 @@ def load_hall_of_fame():
 def load_hall_of_shame():
     """Load hall of shame posts from Vercel blob storage"""
     try:
-        return storage_service.get_json_data('hall_of_shame', [])
+        return memory_storage.get_data('hall_of_shame', [])
     except Exception as e:
         logging.error(f"Error loading hall of shame: {e}")
         return []
@@ -135,7 +121,7 @@ def load_hall_of_shame():
 def load_videos():
     """Load all videos from Vercel blob storage"""
     try:
-        videos = storage_service.get_json_data('videos', [])
+        videos = memory_storage.get_data('videos', [])
         # Sort by timestamp descending (newest first)
         return sorted(videos,
                       key=lambda x: x.get('timestamp', ''),
@@ -148,7 +134,7 @@ def load_videos():
 def save_videos(videos):
     """Save videos to Vercel blob storage"""
     try:
-        return storage_service.put_json_data('videos', videos)
+        return memory_storage.set_data('videos', videos)
     except Exception as e:
         logging.error(f"Error saving videos: {e}")
         return False
@@ -183,7 +169,7 @@ def allowed_video_file(filename):
 def save_posts(posts):
     """Save posts to Vercel blob storage"""
     try:
-        return storage_service.put_json_data('posts', posts)
+        return memory_storage.set_data('posts', posts)
     except Exception as e:
         logging.error(f"Error saving posts: {e}")
         return False
@@ -192,7 +178,7 @@ def save_posts(posts):
 def save_comments(comments):
     """Save comments to Vercel blob storage"""
     try:
-        return storage_service.put_json_data('comments', comments)
+        return memory_storage.set_data('comments', comments)
     except Exception as e:
         logging.error(f"Error saving comments: {e}")
         return False
@@ -201,7 +187,7 @@ def save_comments(comments):
 def save_likes(likes):
     """Save likes to Vercel blob storage"""
     try:
-        return storage_service.put_json_data('likes', likes)
+        return memory_storage.set_data('likes', likes)
     except Exception as e:
         logging.error(f"Error saving likes: {e}")
         return False
@@ -415,21 +401,11 @@ def create_post_route():
                     unique_filename = f"{uuid.uuid4()}.{file_extension}"
 
                     try:
-                        # Read file content
-                        file_content = file.read()
-                        # Get content type
-                        content_type = file.content_type or 'application/octet-stream'
-                        
-                        # Upload to Vercel blob storage
-                        blob_url = storage_service.put_file(file_content, unique_filename, content_type)
-                        if blob_url:
-                            uploaded_filename = unique_filename
-                            logging.info(f"File uploaded to blob storage: {blob_url}")
-                        else:
-                            flash(
-                                'Failed to upload your Skibidi content! Try again, sigma! 💀',
-                                'error')
-                            return render_template('create_post.html')
+                        # Save file locally
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                        file.save(file_path)
+                        uploaded_filename = unique_filename
+                        logging.info(f"File uploaded locally: {file_path}")
                     except Exception as e:
                         logging.error(f"Error uploading file: {e}")
                         flash(
@@ -559,15 +535,14 @@ def get_comments(post_id):
 
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
-    """Serve uploaded files from Vercel blob storage"""
+    """Serve uploaded files from local storage"""
     try:
-        # Get the blob URL for the file
-        blob_url = storage_service.get_file_url(filename)
-        if blob_url:
-            # Redirect to the blob URL for direct serving
-            return redirect(blob_url)
+        # Serve files from local uploads directory
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        if os.path.exists(file_path):
+            return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
         else:
-            logging.warning(f"File not found in blob storage: {filename}")
+            logging.warning(f"File not found: {filename}")
             return "File not found", 404
     except Exception as e:
         logging.error(f"Error serving file {filename}: {e}")
@@ -622,23 +597,17 @@ def upload_scroll():
             unique_filename = f"scroll_{uuid.uuid4()}.{file_extension}"
 
             try:
-                # Read file content
-                file_content = video_file.read()
-                # Get content type
-                content_type = video_file.content_type or f'video/{file_extension}'
+                # Save video file locally
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                video_file.save(file_path)
                 
-                # Upload to Vercel blob storage
-                blob_url = storage_service.put_file(file_content, unique_filename, content_type)
-                if blob_url:
-                    # Create the video
-                    video = create_video(username, title, description, unique_filename)
-                    if video:
-                        flash('Skibidi Scroll uploaded successfully! Absolute sigma energy! 🚽✨', 'success')
-                        return redirect(url_for('skibidi_scrolls'))
-                    else:
-                        flash('Failed to create your Skibidi Scroll! The toilet gods are angry! 😱', 'error')
+                # Create the video
+                video = create_video(username, title, description, unique_filename)
+                if video:
+                    flash('Skibidi Scroll uploaded successfully! Absolute sigma energy! 🚽✨', 'success')
+                    return redirect(url_for('skibidi_scrolls'))
                 else:
-                    flash('Failed to upload your Skibidi Scroll! Try again, sigma! 💀', 'error')
+                    flash('Failed to create your Skibidi Scroll! The toilet gods are angry! 😱', 'error')
             except Exception as e:
                 logging.error(f"Error uploading video: {e}")
                 flash('Failed to upload your Skibidi Scroll! Try again, sigma! 💀', 'error')

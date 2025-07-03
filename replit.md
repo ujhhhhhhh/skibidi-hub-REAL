@@ -20,14 +20,17 @@ This is a Flask-based community hub application themed around internet memes and
 - **Error Handling**: Basic exception handling with user-friendly flash messages
 
 ### Data Storage
-- **Primary Storage**: Vercel Blob Storage for cloud-based data persistence:
-  - JSON data files: posts, comments, likes, hall_of_fame, hall_of_shame
-  - Automatic migration from local data files to cloud storage
-  - Secure API-based access with environment token authentication
-- **File Storage**: Vercel Blob Storage for uploaded media files
-  - Direct cloud upload and serving via blob URLs
-  - Fallback to local storage for development compatibility
-- **No Database**: Uses cloud blob storage for simplicity and scalability
+- **Primary Storage**: In-memory Python dictionaries for fast data access:
+  - JSON data files: posts, comments, likes, hall_of_fame, hall_of_shame, videos
+  - Real-time data storage with instant read/write operations
+  - Automatic backup system to external URLs (configurable via BACKUP_URL)
+- **File Storage**: Local file system for uploaded media files
+  - Direct file upload to uploads/ directory
+  - Standard Flask file serving for images, videos, and other media
+- **Backup System**: Periodic data backups sent to external URL:
+  - Configurable backup interval via BACKUP_INTERVAL environment variable
+  - JSON payload with timestamp and all application data
+  - One-way backup system (send only, no retrieval)
 
 ## Key Components
 
@@ -164,6 +167,13 @@ This is a Flask-based community hub application themed around internet memes and
   - Created beautiful maintenance page with animated design and Discord link
   - Maintained all existing functionality and security practices
   - Server running on gunicorn with proper Flask configuration
+- July 3, 2025. Storage system migration to in-memory with backup:
+  - Migrated from Vercel Blob Storage to in-memory Python dictionaries
+  - Implemented automatic backup system with configurable external URL
+  - Added periodic backup thread with configurable intervals
+  - Updated file handling to use local storage with Flask file serving
+  - Backup system sends JSON data to BACKUP_URL without retrieval functionality
+  - Enhanced performance with instant in-memory data operations
 
 ## User Preferences
 
