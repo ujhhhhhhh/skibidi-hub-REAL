@@ -24,9 +24,10 @@ This is a Flask-based community hub application themed around internet memes and
   - JSON data files: posts, comments, likes, hall_of_fame, hall_of_shame, videos
   - Real-time data storage with instant read/write operations
   - Automatic backup system to external URLs (configurable via BACKUP_URL)
-- **File Storage**: Local file system for uploaded media files
-  - Direct file upload to uploads/ directory
-  - Standard Flask file serving for images, videos, and other media
+- **File Storage**: In-memory base64 encoded file storage
+  - Files stored as base64 strings in memory alongside metadata
+  - Virtual file serving through Flask Response objects
+  - Supports all file types including images, videos, documents
 - **Backup System**: Periodic data backups sent to external URL:
   - Configurable backup interval via BACKUP_INTERVAL environment variable
   - JSON payload with timestamp and all application data
@@ -171,9 +172,12 @@ This is a Flask-based community hub application themed around internet memes and
   - Migrated from Vercel Blob Storage to in-memory Python dictionaries
   - Implemented automatic backup system with configurable external URL
   - Added periodic backup thread with configurable intervals
-  - Updated file handling to use local storage with Flask file serving
+  - Updated file handling to use in-memory base64 encoded storage
+  - Files stored virtually as base64 strings with metadata (content type, size, timestamp)
+  - Virtual file serving through Flask Response objects for Vercel compatibility
   - Backup system sends JSON data to BACKUP_URL without retrieval functionality
   - Enhanced performance with instant in-memory data operations
+  - Completely virtual filesystem - no local file dependencies
 
 ## User Preferences
 

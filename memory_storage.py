@@ -11,6 +11,7 @@ import os
 import requests
 import threading
 import time
+import base64
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
@@ -27,7 +28,8 @@ class MemoryStorage:
             'likes': [],
             'hall_of_fame': [],
             'hall_of_shame': [],
-            'videos': []
+            'videos': [],
+            'files': {}  # Store files as base64 with metadata
         }
         
         # Backup configuration
@@ -105,6 +107,48 @@ class MemoryStorage:
         except Exception as e:
             logger.error(f"Error sending backup: {e}")
     
+    def store_file(self, file_content: bytes, filename: str, content_type: Optional[str] = None) -> bool:
+        """Store file content in memory as base64"""
+        try:
+            file_data = {
+                'content': base64.b64encode(file_content).decode('utf-8'),
+                'content_type': content_type or 'application/octet-stream',
+                'size': len(file_content),
+                'timestamp': datetime.now().isoformat()
+            }
+            self.data['files'][filename] = file_data
+            logger.info(f"File stored in memory: {filename} ({len(file_content)} bytes)")
+            return True
+        except Exception as e:
+            logger.error(f"Error storing file {filename}: {e}")
+            return False
+    
+    def get_file(self, filename: str) -> Optional[Dict[str, Any]]:
+        """Get file data from memory"""
+        return self.data['files'].get(filename)
+    
+    def get_file_content(self, filename: str) -> Optional[bytes]:
+        """Get file content as bytes"""
+        file_data = self.get_file(filename)
+        if file_data:
+            try:
+                return base64.b64decode(file_data['content'])
+            except Exception as e:
+                logger.error(f"Error decoding file {filename}: {e}")
+        return None
+    
+    def delete_file(self, filename: str) -> bool:
+        """Delete file from memory"""
+        if filename in self.data['files']:
+            del self.data['files'][filename]
+            logger.info(f"File deleted from memory: {filename}")
+            return True
+        return False
+    
+    def list_files(self) -> List[str]:
+        """List all stored filenames"""
+        return list(self.data['files'].keys())
+
     def force_backup(self):
         """Force an immediate backup"""
         if self.backup_url:

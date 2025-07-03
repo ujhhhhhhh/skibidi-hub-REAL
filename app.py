@@ -6,7 +6,7 @@ import math
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory, Response
 from memory_storage import memory_storage
 
 # Configure logging
@@ -15,9 +15,8 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET",
                                 "skibidi_sigma_ohio_rizz_2024")
-app.config['UPLOAD_FOLDER'] = 'uploads'
-# Configuration
-DATA_FOLDER = 'data'
+# Configuration - no longer using local file storage
+# All files are stored in memory as base64 encoded data
 
 MAX_CONTENT_LENGTH = 25 * 1024 * 1024  # 25MB
 TEXT_MAX_LENGTH = 2048  # 2KB
@@ -401,11 +400,16 @@ def create_post_route():
                     unique_filename = f"{uuid.uuid4()}.{file_extension}"
 
                     try:
-                        # Save file locally
-                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-                        file.save(file_path)
-                        uploaded_filename = unique_filename
-                        logging.info(f"File uploaded locally: {file_path}")
+                        # Store file in memory
+                        file_content = file.read()
+                        content_type = file.content_type or 'application/octet-stream'
+                        
+                        if memory_storage.store_file(file_content, unique_filename, content_type):
+                            uploaded_filename = unique_filename
+                            logging.info(f"File stored in memory: {unique_filename}")
+                        else:
+                            flash('Failed to upload your Skibidi content! Try again, sigma! 💀', 'error')
+                            return render_template('create_post.html')
                     except Exception as e:
                         logging.error(f"Error uploading file: {e}")
                         flash(
@@ -535,15 +539,20 @@ def get_comments(post_id):
 
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
-    """Serve uploaded files from local storage"""
+    """Serve uploaded files from memory storage"""
     try:
-        # Serve files from local uploads directory
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        if os.path.exists(file_path):
-            return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-        else:
-            logging.warning(f"File not found: {filename}")
-            return "File not found", 404
+        file_data = memory_storage.get_file(filename)
+        if file_data:
+            file_content = memory_storage.get_file_content(filename)
+            if file_content:
+                return Response(
+                    file_content,
+                    mimetype=file_data.get('content_type', 'application/octet-stream'),
+                    headers={'Content-Disposition': f'inline; filename="{filename}"'}
+                )
+        
+        logging.warning(f"File not found in memory: {filename}")
+        return "File not found", 404
     except Exception as e:
         logging.error(f"Error serving file {filename}: {e}")
         return "Error serving file", 500
@@ -597,17 +606,20 @@ def upload_scroll():
             unique_filename = f"scroll_{uuid.uuid4()}.{file_extension}"
 
             try:
-                # Save video file locally
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-                video_file.save(file_path)
+                # Store video file in memory
+                video_content = video_file.read()
+                content_type = video_file.content_type or f'video/{file_extension}'
                 
-                # Create the video
-                video = create_video(username, title, description, unique_filename)
-                if video:
-                    flash('Skibidi Scroll uploaded successfully! Absolute sigma energy! 🚽✨', 'success')
-                    return redirect(url_for('skibidi_scrolls'))
+                if memory_storage.store_file(video_content, unique_filename, content_type):
+                    # Create the video
+                    video = create_video(username, title, description, unique_filename)
+                    if video:
+                        flash('Skibidi Scroll uploaded successfully! Absolute sigma energy! 🚽✨', 'success')
+                        return redirect(url_for('skibidi_scrolls'))
+                    else:
+                        flash('Failed to create your Skibidi Scroll! The toilet gods are angry! 😱', 'error')
                 else:
-                    flash('Failed to create your Skibidi Scroll! The toilet gods are angry! 😱', 'error')
+                    flash('Failed to upload your Skibidi Scroll! Try again, sigma! 💀', 'error')
             except Exception as e:
                 logging.error(f"Error uploading video: {e}")
                 flash('Failed to upload your Skibidi Scroll! Try again, sigma! 💀', 'error')
