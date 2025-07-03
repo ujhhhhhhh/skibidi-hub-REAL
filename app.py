@@ -670,6 +670,23 @@ def api_posts():
     posts = load_posts()
     return jsonify(posts)
 
+@app.route('/debug/storage')
+def debug_storage():
+    """Debug endpoint to check memory storage status"""
+    all_data = memory_storage.get_all_data()
+    
+    debug_info = {
+        'storage_keys': list(all_data.keys()),
+        'posts_count': len(all_data.get('posts', [])),
+        'files_count': len(all_data.get('files', {})),
+        'files_stored': list(all_data.get('files', {}).keys())[:10],  # First 10 filenames
+        'total_file_size': sum(f.get('size', 0) for f in all_data.get('files', {}).values()),
+        'sample_post': all_data.get('posts', [])[0] if all_data.get('posts') else None,
+        'memory_usage_estimate': len(str(all_data))
+    }
+    
+    return jsonify(debug_info)
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
